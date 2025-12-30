@@ -346,30 +346,26 @@ const handlePreview = () => {
 
 ### 软件授权使用
 
-本软件默认在底部显示版权信息。如需隐藏或修改版权信息，必须获取授权码。
+本软件默认在底部显示版权信息。如需隐藏或修改版权信息，必须使用有效的数字签名令牌与公钥。
 
-#### 获取授权码
+#### 获取授权
 
-请联系作者获取授权码：
+请联系作者获取：
+1. **授权令牌 (Token)**：包含公司名、有效期等信息的签名串。
+2. **公钥 (Public Key)**：用于验证签名的 `public.pem` 文件内容。
+
 - 邮箱：nywqs@outlook.com
 - 电话：18637762001
 
-#### 使用授权码
+#### 使用方式
+
+在使用 `ScadaCanvas` 组件时，需同时传入 `auth-code`（令牌）与 `public-key-pem`（公钥内容）。
 
 ```vue
 <template>
   <ScadaCanvas 
-    auth-code="your-auth-code-here"
-  />
-</template>
-```
-
-#### 自定义 Footer 信息（需授权）
-
-```vue
-<template>
-  <ScadaCanvas 
-    auth-code="your-auth-code-here"
+    :auth-code="licenseToken"
+    :public-key-pem="publicKey"
     :custom-footer="{
       copyright: '© 2025 您的公司',
       license: '商业授权使用',
@@ -377,25 +373,33 @@ const handlePreview = () => {
     }"
   />
 </template>
+
+<script setup lang="ts">
+// 填入从授权方获取的 Token 字符串
+const licenseToken = 'eyJh...<完整Token字符串>'
+
+// 填入 public.pem 的完整内容
+const publicKey = `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxx==
+-----END PUBLIC KEY-----`
+</script>
 ```
 
 **授权模式说明**
-- 不提供 authCode：显示默认版权信息
-- 有效 authCode + 无 customFooter：隐藏 Footer
-- 有效 authCode + customFooter：显示自定义 Footer
+- 未提供有效 Token 或 公钥验证失败：显示默认版权信息
+- 验证通过 + 无 customFooter：隐藏 Footer
+- 验证通过 + customFooter：显示自定义 Footer
 
-**授权信息解密**
-
-授权码采用 AES-256-CBC + OpenSSL 格式加密，可解密出：
-- 公司/授权名称
-- 有效期（可选）
-- 机器码绑定（可选）
+**授权验证机制**
+采用 ECDSA P-256 + SHA-256 数字签名技术。前端仅持有公钥进行验签，无法伪造授权。
 
 控制台会输出授权验证信息：
 ```javascript
-授权验证成功
-授权公司: leoncheng
-有效期至: 2026-12-17
+✅ 授权验证成功
+🏛️ 授权公司: ACME Corp
+📅 有效期至: 2026-12-31
 ```
 
 ## 预览模式
@@ -488,15 +492,11 @@ npm publish
 
 ## 许可协议
 
-版权所有 © 2025 leoncheng
+本项目采用 **MIT 许可协议**，详见 [LICENSE](LICENSE) 文件。
 
-本项目采用专有许可协议，详见 [LICENSE](LICENSE) 文件。
-
-简要说明：
-- 允许用于学习和研究目的
-- 禁止未经授权的商业使用
-- 商业使用需获取书面授权和有效授权码
-- 详细条款请查看 LICENSE 文件
+- 允许商业使用、修改、分发
+- 需保留版权声明与许可文本
+- 软件按“原样”提供，无任何担保
 
 如需商业授权，请联系作者。
 
