@@ -169,7 +169,6 @@ const handleLoadData = (jsonData: any) => {
 | `workflow()` | - | `void` | 打开流程编排弹窗 |
 | `zoomIn()` | - | `void` | 放大画布 |
 | `zoomOut()` | - | `void` | 缩小画布 |
-| `fitView()` | - | `void` | 适应画布视图 |
 | `clearAll()` | - | `void` | 清空画布所有元素 |
 | `getGraph()` | - | `Graph \| null` | 获取 X6 Graph 实例 |
 | `getCanvasData()` | - | `object \| null` | 获取画布完整数据 |

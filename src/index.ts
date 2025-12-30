@@ -129,8 +129,6 @@ export interface ScadaCanvasExposed {
   zoomIn: () => void
   /** 缩小画布 */
   zoomOut: () => void
-  /** 适应画布视图 */
-  fitView: () => void
   /** 清空画布所有元素 */
   clearAll: () => void
   
