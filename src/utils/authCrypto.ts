@@ -4,14 +4,6 @@
  * 兼容 Node.js authkey_tool.js
  */
 
-
-/**
- * 获取授权信息
- * @param authCode - Hex格式的授权码
- * @param password - 解密密码
- * @returns 授权信息对象
- */
-
 function base64UrlToUint8Array(input: string): Uint8Array {
 	const base64 = input.replace(/-/g, '+').replace(/_/g, '/')
 	const pad = base64.length % 4 ? '='.repeat(4 - (base64.length % 4)) : ''
