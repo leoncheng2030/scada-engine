@@ -83,16 +83,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { Graph } from '@antv/x6'
 import { Selection } from '@antv/x6-plugin-selection'
 import { Snapline } from '@antv/x6-plugin-snapline'
+import { register } from '@antv/x6-vue-shape'
 import Header from './Header.vue'
 import ComponentLibrary from './ComponentLibrary.vue'
 import CanvasArea from './CanvasArea.vue'
 import PropertyPanel from './PropertyPanel.vue'
 import Footer from './Footer.vue'
 import WorkflowDialog from '../views/workflow/WorkflowDialog.vue'
+import EChartsGauge from '../scada-components/iot/EChartsGauge.vue'
 import { componentRegistry, canvasConfigManager } from '../scada-components'
 import {
 	saveToSession,
@@ -194,6 +196,74 @@ onMounted(() => {
 			}
 		}
 	}, true)
+
+	// 注册 ECharts Vue 组件节点
+	register({
+		shape: 'echarts-vue',
+		width: 300,
+		height: 300,
+		component: EChartsGauge,
+		ports: {
+			groups: {
+				top: {
+					position: 'top',
+					attrs: {
+						circle: {
+							r: 4,
+							magnet: true,
+							stroke: '#31d0c6',
+							strokeWidth: 2,
+							fill: '#fff'
+						}
+					}
+				},
+				right: {
+					position: 'right',
+					attrs: {
+						circle: {
+							r: 4,
+							magnet: true,
+							stroke: '#31d0c6',
+							strokeWidth: 2,
+							fill: '#fff'
+						}
+					}
+				},
+				bottom: {
+					position: 'bottom',
+					attrs: {
+						circle: {
+							r: 4,
+							magnet: true,
+							stroke: '#31d0c6',
+							strokeWidth: 2,
+							fill: '#fff'
+						}
+					}
+				},
+				left: {
+					position: 'left',
+					attrs: {
+						circle: {
+							r: 4,
+							magnet: true,
+							stroke: '#31d0c6',
+							strokeWidth: 2,
+							fill: '#fff'
+						}
+					}
+				}
+			},
+			items: [
+				{ id: 'port-top', group: 'top' },
+				{ id: 'port-right', group: 'right' },
+				{ id: 'port-bottom', group: 'bottom' },
+				{ id: 'port-left', group: 'left' }
+			]
+		}
+	})
+	
+	console.log('[Vue Shape] ECharts Vue 组件节点注册成功')
 
 	// 初始化 X6 画布
 	const container = canvasAreaRef.value.containerRef
@@ -599,6 +669,8 @@ const handleAddNode = (type: string) => {
 	}
 
 	const node = graph.addNode(nodeConfig)
+	console.log('[Node] 添加节点:', config.shape, node.id, nodeConfig)
+	
 	// 先取消所有选中，再选中新添加的节点
 	graph.cleanSelection()
 	graph.select(node)

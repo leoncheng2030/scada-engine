@@ -30,6 +30,7 @@
     "@antv/x6-plugin-dnd": "^2.1.1",
     "@antv/x6-plugin-selection": "^2.2.0",
     "@antv/x6-plugin-snapline": "^2.1.0",
+    "@antv/x6-vue-shape": "^2.1.2",
     "@vicons/carbon": "^0.13.0",
     "@vueuse/core": "^10.0.0",
     "crypto-js": "^4.2.0",

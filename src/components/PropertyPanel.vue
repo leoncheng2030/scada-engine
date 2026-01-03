@@ -433,6 +433,17 @@ const updateDynamicProp = (path: string, value: any) => {
 		}
 		current[pathParts[pathParts.length - 1]] = value
 		
+		console.log('[PropertyPanel] 更新属性:', path, '=', value)
+		console.log('[PropertyPanel] 节点类型:', props.selectedNode.shape)
+		
+		// 特殊处理：ECharts 仪表盘预设切换
+		// 只更新 presetId，不合并预设配置到 data
+		// 让 Vue 组件根据 presetId 自己应用配置
+		if (path === 'data.presetId' && props.selectedNode.shape === 'echarts-vue') {
+			console.log('[PropertyPanel] 检测到预设切换，只更新 presetId')
+			// 不需要在这里合并配置，Vue 组件会自己处理
+		}
+		
 		emit('updateNode', { data: newData })
 	}
 }

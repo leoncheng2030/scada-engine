@@ -35,6 +35,7 @@ class ComponentRegistryManager {
     this.register(IoTComponents.LightComponent)
     this.register(IoTComponents.SwitchComponent)
     this.register(IoTComponents.GaugeComponent)
+    this.register(IoTComponents.EChartsGaugeComponent)
   }
 
   /**
