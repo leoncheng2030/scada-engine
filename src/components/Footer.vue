@@ -57,8 +57,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { validateAuthKey, getAuthInfo } from '../utils/authCrypto'
+import { ref, computed, watch } from 'vue'
+import { getSignedAuthInfo } from '../utils/authCrypto'
 
 interface CustomFooterConfig {
 	copyright?: string
@@ -67,46 +67,38 @@ interface CustomFooterConfig {
 }
 
 interface Props {
-	authCode?: string // 授权码
-	customFooter?: CustomFooterConfig // 自定义 Footer 配置
+	authCode?: string
+	publicKeyPem?: string
+	customFooter?: CustomFooterConfig
 }
 
 const props = withDefaults(defineProps<Props>(), {
 	authCode: '',
+	publicKeyPem: undefined,
 	customFooter: undefined
 })
 
 // 验证授权码（使用真实的加密解密）
 const authInfo = ref<{ company: string; expiryDate?: string; isValid: boolean } | null>(null)
 
-const isAuthorized = computed(() => {
-	if (!props.authCode) {
-		return false
-	}
-	
-	// 使用 authCrypto 工具验证
-	const valid = validateAuthKey(props.authCode)
-	
-	if (valid) {
-		// 获取授权信息
-		const info = getAuthInfo(props.authCode)
-		if (info) {
-			authInfo.value = info
-			console.log('✅ 授权验证成功')
-			console.log('🏛️ 授权公司:', info.company)
-			if (info.expiryDate) {
-				console.log('📅 有效期至:', info.expiryDate)
-			} else {
-				console.log('∞ 永久授权')
-			}
+const authorized = ref(false)
+
+watch(
+	() => [props.authCode, props.publicKeyPem],
+	async () => {
+		if (!props.authCode || !props.publicKeyPem) {
+			authorized.value = false
+			authInfo.value = null
+			return
 		}
-	} else {
-		authInfo.value = null
-		console.warn('❌ 授权码验证失败')
-	}
-	
-	return valid
-})
+		const info = await getSignedAuthInfo(props.authCode, props.publicKeyPem)
+		authorized.value = !!info?.isValid
+		authInfo.value = info || null
+	},
+	{ immediate: true }
+)
+
+const isAuthorized = computed(() => authorized.value)
 </script>
 
 <style scoped>

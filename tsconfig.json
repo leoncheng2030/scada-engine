@@ -17,7 +17,6 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
-		"suppressImplicitAnyIndexErrors": true,
 		"noEmitOnError": false,
 		"skipDefaultLibCheck": true,
 		"diagnostics": false,
