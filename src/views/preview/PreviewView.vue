@@ -1,17 +1,5 @@
 <template>
 	<div class="preview-container">
-		<!-- 预览模式头部 -->
-		<div class="preview-header">
-			<div class="preview-info">
-				<h2>预览模式</h2>
-				<span class="tip">在此模式下查看组态效果，所有编辑功能已禁用</span>
-			</div>
-			<button class="exit-btn" @click="exitPreview">
-				<span class="icon">←</span>
-				<span>返回编辑</span>
-			</button>
-		</div>
-
 		<!-- 画布容器 -->
 		<div class="preview-canvas-wrapper">
 			<div ref="canvasContainer" class="preview-canvas"></div>
@@ -21,13 +9,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+
 import { Graph } from '@antv/x6'
 import { registerNodeEvents } from '../../utils/eventUtils'
 import { loadFromSession, removeFromSession, STORAGE_KEYS } from '../../utils/storageUtils'
 import { animationEngine } from '../../utils/animationEngine'
 
-const router = useRouter()
+// 导入所有组件以确保它们被注册
+import '../../scada-components/basic'
+import '../../scada-components/iot'
+
 const canvasContainer = ref<HTMLElement | null>(null)
 let graph: Graph | null = null
 
@@ -109,10 +100,7 @@ onUnmounted(() => {
 	removeFromSession(STORAGE_KEYS.SCADA_PREVIEW_DATA)
 })
 
-// 退出预览
-const exitPreview = () => {
-	router.back()
-}
+
 </script>
 
 <style scoped>
@@ -130,7 +118,6 @@ const exitPreview = () => {
 	background: #16213e;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	padding: 0 24px;
 	border-bottom: 1px solid #334155;
 	flex-shrink: 0;
@@ -154,30 +141,7 @@ const exitPreview = () => {
 	color: #94a3b8;
 }
 
-.exit-btn {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 10px 20px;
-	background: #3b82f6;
-	color: #fff;
-	border: none;
-	border-radius: 6px;
-	cursor: pointer;
-	transition: all 0.2s;
-	font-size: 14px;
-	font-weight: 500;
-}
 
-.exit-btn:hover {
-	background: #2563eb;
-	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.exit-btn .icon {
-	font-size: 18px;
-}
 
 .preview-canvas-wrapper {
 	flex: 1;

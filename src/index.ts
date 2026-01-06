@@ -81,6 +81,12 @@ export {
 // 导出动画引擎
 export { animationEngine } from './utils/animationEngine'
 
+// 导出事件处理工具
+export { registerNodeEvents } from './utils/eventUtils'
+
+// 导出预览视图
+export { default as PreviewView } from './views/preview/PreviewView.vue'
+
 // 导出设备点位相关类型
 export type {
 	Device,
