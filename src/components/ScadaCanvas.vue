@@ -162,6 +162,33 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const showWorkflowDialog = ref(false)
 let graph: Graph | null = null
 
+// 自动计算适合的缩放比例
+const calculateFitScale = () => {
+	const canvasArea = canvasAreaRef.value?.containerRef?.parentElement
+	if (!canvasArea) return 1
+	
+	const canvasConfig = canvasConfigManager.getConfig()
+	const canvasWidth = canvasConfig.size.width
+	const canvasHeight = canvasConfig.size.height
+	
+	const areaWidth = canvasArea.clientWidth
+	const areaHeight = canvasArea.clientHeight
+	
+	// 留出一些边距（40px）
+	const padding = 40
+	const availableWidth = areaWidth - padding
+	const availableHeight = areaHeight - padding
+	
+	// 计算宽度和高度的缩放比例
+	const scaleX = availableWidth / canvasWidth
+	const scaleY = availableHeight / canvasHeight
+	
+	// 取较小的比例，确保画布完全可见
+	const autoScale = Math.min(scaleX, scaleY, 1) // 最大不超过1（100%）
+	
+	return autoScale
+}
+
 onMounted(() => {
 	if (!canvasAreaRef.value?.containerRef) return
 
@@ -641,10 +668,21 @@ onMounted(() => {
 		// 使用 transform 缩放
 		container.style.transform = `scale(${scale})`
 		container.style.transformOrigin = 'center center'
+		// 同步更新配置中的缩放值
+		canvasConfigManager.updateByPath('zoom.scale', Number(scale.toFixed(2)))
 	}
 	
-	// 应用初始缩放
-	updateContainerTransform(canvasConfig.zoom.scale)
+	// 应用初始自适应缩放
+	const initialScale = calculateFitScale()
+	updateContainerTransform(initialScale)
+	
+	// 监听窗口大小变化，自动调整缩放
+	const handleResize = () => {
+		const fitScale = calculateFitScale()
+		updateContainerTransform(fitScale)
+	}
+	
+	window.addEventListener('resize', handleResize)
 	
 	// 创建画布实例
 	graph = new Graph({
@@ -893,6 +931,7 @@ onMounted(() => {
 	// 清理监听器
 	onUnmounted(() => {
 		document.removeEventListener('keydown', handleKeyDown)
+		window.removeEventListener('resize', handleResize)
 	})
 })
 
@@ -932,17 +971,19 @@ watch(
 			graph.drawBackground({ color: config.background.color || '#1e293b' })
 		}
 
-		// 更新容器缩放
+		// 更新容器缩放和尺寸
 		const container = canvasAreaRef.value?.containerRef
 		if (container) {
-			// 使用 transform 缩放
-			container.style.transform = `scale(${config.zoom.scale})`
-			container.style.transformOrigin = 'center center'
 			// 更新 Graph 尺寸
 			graph.resize(config.size.width, config.size.height)
 			// 同时更新容器基础尺寸
 			container.style.width = `${config.size.width}px`
 			container.style.height = `${config.size.height}px`
+			// 如果用户手动修改了缩放，使用用户设置的值；否则重新计算自适应缩放
+			const fitScale = calculateFitScale()
+			const finalScale = config.zoom.scale > fitScale ? config.zoom.scale : fitScale
+			container.style.transform = `scale(${finalScale})`
+			container.style.transformOrigin = 'center center'
 		}
 
 		// 更新网格

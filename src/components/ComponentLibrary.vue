@@ -7,8 +7,11 @@
 		<div class="library-content">
 			<!-- 基础组件 -->
 			<div class="component-section" v-if="basicComponents.length > 0">
-				<h4 class="section-title">基础组件</h4>
-				<div class="component-grid">
+				<div class="section-header" @click="toggleSection('basic')">
+					<h4 class="section-title">基础组件</h4>
+					<span class="toggle-icon" :class="{ collapsed: collapsedSections.basic }">▼</span>
+				</div>
+				<div class="component-grid" v-show="!collapsedSections.basic">
 					<div 
 						v-for="component in basicComponents"
 						:key="component.metadata.id"
@@ -24,8 +27,11 @@
 
 			<!-- IoT组件 -->
 			<div class="component-section" v-if="iotComponents.length > 0">
-				<h4 class="section-title">IoT组件</h4>
-				<div class="component-grid">
+				<div class="section-header" @click="toggleSection('iot')">
+					<h4 class="section-title">IoT组件</h4>
+					<span class="toggle-icon" :class="{ collapsed: collapsedSections.iot }">▼</span>
+				</div>
+				<div class="component-grid" v-show="!collapsedSections.iot">
 					<div 
 						v-for="component in iotComponents"
 						:key="component.metadata.id"
@@ -43,13 +49,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { componentRegistry } from '../scada-components'
 import type { ComponentConfig } from '../scada-components'
 
 const emit = defineEmits<{
 	addComponent: [type: string]
 }>()
+
+// 折叠状态
+const collapsedSections = reactive({
+	basic: false,
+	iot: false
+})
+
+// 切换分组折叠状态
+const toggleSection = (section: 'basic' | 'iot') => {
+	collapsedSections[section] = !collapsedSections[section]
+}
 
 // 从注册表获取组件
 const basicComponents = computed(() => 
@@ -104,25 +121,51 @@ const handleAddComponent = (component: ComponentConfig) => {
 	margin-bottom: 0;
 }
 
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+	cursor: pointer;
+	user-select: none;
+	padding: 4px 0;
+	transition: all 0.2s;
+}
+
+.section-header:hover {
+	opacity: 0.8;
+}
+
 .section-title {
 	font-size: 13px;
 	color: #94a3b8;
-	margin: 0 0 12px 0;
+	margin: 0;
 	font-weight: 600;
+}
+
+.toggle-icon {
+	font-size: 10px;
+	color: #94a3b8;
+	transition: transform 0.2s;
+}
+
+.toggle-icon.collapsed {
+	transform: rotate(-90deg);
 }
 
 .component-grid {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	grid-template-columns: repeat(3, 1fr);
 	gap: 8px;
+	margin-bottom: 12px;
 }
 
 .component-item {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 6px;
-	padding: 16px 8px;
+	gap: 4px;
+	padding: 12px 6px;
 	background: #0f172a;
 	border: 1px solid #334155;
 	border-radius: 6px;
@@ -142,14 +185,16 @@ const handleAddComponent = (component: ComponentConfig) => {
 }
 
 .component-icon {
-	font-size: 24px;
+	font-size: 20px;
 	color: #e2e8f0;
 }
 
 .component-name {
-	font-size: 12px;
+	font-size: 11px;
 	color: #cbd5e1;
 	font-weight: 500;
+	text-align: center;
+	line-height: 1.2;
 }
 
 /* 滚动条样式 - 与全局统一 */

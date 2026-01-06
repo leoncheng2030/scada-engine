@@ -81,6 +81,22 @@ export {
 // 导出动画引擎
 export { animationEngine } from './utils/animationEngine'
 
+// 导出设备点位相关类型
+export type {
+	Device,
+	DevicePoint,
+	DeviceList,
+	PointValueUpdate
+} from './types/device'
+
+// 导出设备点位相关枚举
+export {
+	DeviceStatus,
+	DeviceType,
+	PointDataType,
+	PointAccessMode
+} from './types/device'
+
 // 类型定义
 export interface EventConfig {
   id?: string

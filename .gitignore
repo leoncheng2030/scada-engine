@@ -7,6 +7,12 @@ dist/
 *.log
 *.tgz
 
+# Hexo docs
+docs/public/
+docs/db.json
+docs/.deploy*/
+docs/node_modules/
+
 # IDE
 .vscode/
 .idea/
@@ -30,3 +36,5 @@ coverage/
 .env
 .env.local
 .env.*.local
+docs/
+images/

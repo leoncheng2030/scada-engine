@@ -21,7 +21,42 @@
 						<option value="1366*768">1366*768</option>
 						<option value="1280*720">1280*720</option>
 						<option value="800*600">800*600</option>
+						<option value="custom">自定义</option>
 					</select>
+				</div>
+				
+				<!-- 自定义宽度 -->
+				<div class="config-item" v-if="canvasConfig.size.preset === 'custom'">
+					<label>宽度</label>
+					<div class="number-input-group">
+						<button @click="adjustSize('width', -100)" class="adjust-btn">-</button>
+						<input 
+							type="number" 
+							v-model.number="customWidth"
+							@change="handleCustomSizeChange"
+							:min="800"
+							:max="7680"
+							class="config-number"
+						/>
+						<button @click="adjustSize('width', 100)" class="adjust-btn">+</button>
+					</div>
+				</div>
+				
+				<!-- 自定义高度 -->
+				<div class="config-item" v-if="canvasConfig.size.preset === 'custom'">
+					<label>高度</label>
+					<div class="number-input-group">
+						<button @click="adjustSize('height', -100)" class="adjust-btn">-</button>
+						<input 
+							type="number" 
+							v-model.number="customHeight"
+							@change="handleCustomSizeChange"
+							:min="600"
+							:max="4320"
+							class="config-number"
+						/>
+						<button @click="adjustSize('height', 100)" class="adjust-btn">+</button>
+					</div>
 				</div>
 			</div>
 
@@ -194,12 +229,35 @@ import { canvasConfigManager, sizePresetMap } from '../scada-components'
 const canvasConfig = computed(() => canvasConfigManager.getConfig())
 const fileInput = ref<HTMLInputElement>()
 
+// 自定义尺寸
+const customWidth = ref(canvasConfig.value.size.width)
+const customHeight = ref(canvasConfig.value.size.height)
+
 const handleSizePresetChange = () => {
 	const preset = canvasConfig.value.size.preset
-	if (preset && preset in sizePresetMap) {
+	if (preset === 'custom') {
+		// 切换到自定义时，使用当前尺寸
+		customWidth.value = canvasConfig.value.size.width
+		customHeight.value = canvasConfig.value.size.height
+	} else if (preset && preset in sizePresetMap) {
 		const { width, height } = sizePresetMap[preset]
 		canvasConfigManager.setSize(width, height, preset)
 	}
+}
+
+const handleCustomSizeChange = () => {
+	if (canvasConfig.value.size.preset === 'custom') {
+		canvasConfigManager.setSize(customWidth.value, customHeight.value, 'custom')
+	}
+}
+
+const adjustSize = (dimension: 'width' | 'height', delta: number) => {
+	if (dimension === 'width') {
+		customWidth.value = Math.max(800, Math.min(7680, customWidth.value + delta))
+	} else {
+		customHeight.value = Math.max(600, Math.min(4320, customHeight.value + delta))
+	}
+	handleCustomSizeChange()
 }
 
 const adjustOffset = (axis: 'x' | 'y', delta: number) => {
