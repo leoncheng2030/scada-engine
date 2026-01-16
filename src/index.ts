@@ -24,8 +24,7 @@ import BasicPropertiesTab from './components/BasicPropertiesTab.vue'
 import AttributeConfigDialog from './components/AttributeConfigDialog.vue'
 import CustomCodeDialog from './components/CustomCodeDialog.vue'
 
-// 预览视图（仅独立运行时使用，库模式不导出）
-// import PreviewView from './views/preview/PreviewView.vue'
+
 // 全局样式（库模式下也需要打包输出）
 import './style.css'
 
@@ -81,8 +80,7 @@ export { animationEngine } from './utils/animationEngine'
 // 导出事件处理工具
 export { registerNodeEvents } from './utils/eventUtils'
 
-// 导出预览视图
-export { default as PreviewView } from './views/preview/PreviewView.vue'
+
 
 // 导出设备点位相关类型
 export type {
@@ -247,7 +245,7 @@ const components = {
   BasicPropertiesTab,
   AttributeConfigDialog,
   CustomCodeDialog,
-  // PreviewView, // 仅独立运行时使用，库模式不导出
+  // PreviewView, // 已移除，请使用 previewMode prop
 }
 
 // 导出单个组件
@@ -262,7 +260,7 @@ export {
   BasicPropertiesTab,
   AttributeConfigDialog,
   CustomCodeDialog,
-  // PreviewView, // 仅独立运行时使用，库模式不导出
+  // PreviewView, // 已移除，请使用 previewMode prop
 }
 
 // 安装函数 - 支持 app.use() 方式注册

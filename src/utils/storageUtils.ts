@@ -7,8 +7,7 @@
  * LocalStorage 键名常量
  */
 export const STORAGE_KEYS = {
-  SCADA_EDITOR_DATA: 'scada_editor_data',
-  SCADA_PREVIEW_DATA: 'scada_preview_data',
+  SCADA_EDITOR_DATA: 'scada_editor_data', // 画布编辑数据
 } as const
 
 /**

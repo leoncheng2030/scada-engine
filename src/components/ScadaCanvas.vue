@@ -851,31 +851,14 @@ const handleFileSelect = (event: Event) => {
 }
 
 const handlePreview = () => {
-	console.log('🎬 [ScadaCanvas] handlePreview 被调用')
 	if (!graph) {
-		console.error('⚠️ [ScadaCanvas] graph 不存在')
+		showMessage('画布未初始化', 'error')
 		return
 	}
 	
-	// 获取画布数据
-	const canvasData = {
-		cells: graph.toJSON().cells,
-		config: {
-			width: canvasConfigManager.getConfig().size.width,
-			height: canvasConfigManager.getConfig().size.height,
-			background: canvasConfigManager.getConfig().background,
-			grid: canvasConfigManager.getConfig().grid
-		}
-	}
-	
-	// 将数据存储到 localStorage
-	saveToLocal(STORAGE_KEYS.SCADA_PREVIEW_DATA, canvasData)
-	console.log('✅ [ScadaCanvas] 数据已保存到 localStorage')
-	
-	// 触发预览事件，由父组件处理路由跳转
-	console.log('📤 [ScadaCanvas] 即将触发 preview 事件')
+	// 触发预览事件，由父组件处理
+	// 父组件可以通过 getCanvasData() 获取画布数据
 	emit('preview')
-	console.log('✅ [ScadaCanvas] preview 事件已触发')
 }
 
 const handleWorkflow = () => {

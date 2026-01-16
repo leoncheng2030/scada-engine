@@ -5,7 +5,7 @@
 			<slot name="left">
 				<!-- 默认内容 -->
 				<h1 class="logo">SCADA 组态引擎</h1>
-				<span class="version">v1.0.0</span>
+				<span class="version">v{{ version }}</span>
 			</slot>
 		</div>
 		<!-- 画布操作组 - 居中 -->
@@ -105,6 +105,10 @@ import {
 	DistributeHorizontalCenter,
 	DistributeVerticalCenter
 } from '@vicons/carbon'
+import packageInfo from '../../package.json'
+
+// 从 package.json 获取版本号
+const version = packageInfo.version
 
 interface Props {
 	selectedNodesCount?: number
