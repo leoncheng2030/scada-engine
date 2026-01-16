@@ -218,170 +218,16 @@
 					</div>
 				</div>
 			</div>
-
-			<!-- 数据源配置 -->
-			<div class="config-section">
-				<h4 class="section-title">数据源</h4>
-				
-				<!-- 启用 MQTT -->
-				<div class="config-item">
-					<label>MQTT 数据源</label>
-					<label class="switch">
-						<input type="checkbox" v-model="mqttEnabled" @change="handleMqttEnabledChange" />
-						<span class="slider"></span>
-					</label>
-				</div>
-
-				<!-- MQTT 配置项 -->
-				<template v-if="mqttEnabled">
-					<!-- Broker 地址 -->
-					<div class="config-item-full">
-						<label>Broker 地址</label>
-						<input 
-							type="text" 
-							v-model="mqttConfig.broker"
-							@change="handleMqttConfigChange"
-							placeholder="mqtt://broker.emqx.io"
-							class="config-input-full"
-						/>
-					</div>
-
-					<!-- 订阅主题 -->
-					<div class="config-item-full">
-						<label>订阅主题</label>
-						<input 
-							type="text" 
-							v-model="mqttConfig.topic"
-							@change="handleMqttConfigChange"
-							placeholder="/devices/+/data"
-							class="config-input-full"
-						/>
-					</div>
-
-					<!-- 客户端ID -->
-					<div class="config-item-full">
-						<label>客户端ID</label>
-						<input 
-							type="text" 
-							v-model="mqttConfig.clientId"
-							@change="handleMqttConfigChange"
-							placeholder="自动生成"
-							class="config-input-full"
-						/>
-					</div>
-
-					<!-- 用户名 -->
-					<div class="config-item-full">
-						<label>用户名</label>
-						<input 
-							type="text" 
-							v-model="mqttConfig.username"
-							@change="handleMqttConfigChange"
-							placeholder="可选"
-							class="config-input-full"
-						/>
-					</div>
-
-					<!-- 密码 -->
-					<div class="config-item-full">
-						<label>密码</label>
-						<input 
-							type="password" 
-							v-model="mqttConfig.password"
-							@change="handleMqttConfigChange"
-							placeholder="可选"
-							class="config-input-full"
-						/>
-					</div>
-
-					<!-- 连接状态 -->
-					<div class="config-item" v-if="mqttStatus">
-						<label>连接状态</label>
-						<span :class="['status-badge', mqttStatus.connected ? 'connected' : 'disconnected']">
-							{{ mqttStatus.connected ? '已连接' : '未连接' }}
-						</span>
-					</div>
-				</template>
-			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, inject, onUnmounted, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { canvasConfigManager, sizePresetMap } from '../scada-components'
 
 const canvasConfig = computed(() => canvasConfigManager.getConfig())
 const fileInput = ref<HTMLInputElement>()
-
-// MQTT 配置
-const mqttEnabled = ref(false)
-const mqttConfig = ref({
-	broker: 'mqtt://broker.emqx.io',
-	topic: '/devices/+/data',
-	clientId: '',
-	username: '',
-	password: ''
-})
-const mqttStatus = ref<{ connected: boolean } | null>(null)
-
-// 注入 ScadaCanvas 提供的 MQTT 方法
-const connectMqtt = inject<Function | undefined>('connectMqtt')
-const disconnectMqtt = inject<Function | undefined>('disconnectMqtt')
-const getMqttStatus = inject<Function | undefined>('getMqttStatus')
-
-// 处理 MQTT 启用状态变化
-const handleMqttEnabledChange = () => {
-	if (mqttEnabled.value) {
-		// 启用 MQTT，如果没有 clientId 则生成一个
-		if (!mqttConfig.value.clientId) {
-			mqttConfig.value.clientId = 'scada_' + Date.now()
-		}
-		// 连接 MQTT
-		connectMqtt?.({
-			type: 'MQTT',
-			enabled: true,
-			...mqttConfig.value
-		})
-	} else {
-		// 禁用 MQTT
-		disconnectMqtt?.()
-		mqttStatus.value = null
-	}
-}
-
-// 处理 MQTT 配置变化
-const handleMqttConfigChange = () => {
-	if (mqttEnabled.value) {
-		// 重新连接
-		handleMqttEnabledChange()
-	}
-}
-
-// 定时检查 MQTT 连接状态
-let statusCheckInterval: number | null = null
-watch(mqttEnabled, (enabled) => {
-	if (enabled) {
-		statusCheckInterval = setInterval(() => {
-			if (getMqttStatus) {
-				const connected = getMqttStatus()
-				mqttStatus.value = { connected }
-			}
-		}, 1000) as unknown as number
-	} else {
-		if (statusCheckInterval) {
-			clearInterval(statusCheckInterval)
-			statusCheckInterval = null
-		}
-	}
-})
-
-// 组件销毁时清理
-onUnmounted(() => {
-	if (statusCheckInterval) {
-		clearInterval(statusCheckInterval)
-	}
-})
 
 // 自定义尺寸
 const customWidth = ref(canvasConfig.value.size.width)
@@ -694,57 +540,5 @@ const clearBackgroundImage = () => {
 
 .panel-content::-webkit-scrollbar-corner {
 	background: #0f172a;
-}
-
-/* MQTT 配置项样式 */
-.config-item-full {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	margin-bottom: 12px;
-}
-
-.config-item-full label {
-	font-size: 12px;
-	color: #cbd5e1;
-}
-
-.config-input-full {
-	width: 100%;
-	padding: 8px 12px;
-	background: #0f172a;
-	color: #e2e8f0;
-	border: 1px solid #334155;
-	border-radius: 4px;
-	font-size: 13px;
-	transition: all 0.2s;
-}
-
-.config-input-full:focus {
-	outline: none;
-	border-color: #3b82f6;
-	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.config-input-full::placeholder {
-	color: #64748b;
-}
-
-/* 连接状态标签 */
-.status-badge {
-	padding: 4px 12px;
-	border-radius: 12px;
-	font-size: 12px;
-	font-weight: 500;
-}
-
-.status-badge.connected {
-	background: rgba(34, 197, 94, 0.2);
-	color: #22c55e;
-}
-
-.status-badge.disconnected {
-	background: rgba(239, 68, 68, 0.2);
-	color: #ef4444;
 }
 </style>

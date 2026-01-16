@@ -2,6 +2,8 @@
  * SCADA 组件系统类型定义
  */
 
+import type { ComponentDataAdapter } from '../types/dataAdapter'
+
 /**
  * 属性配置类型
  */
@@ -62,6 +64,31 @@ export interface ComponentData {
 }
 
 /**
+ * 组件点位定义（组件预定义的数据点）
+ */
+export interface ComponentPoint {
+	/** 点位ID（组件内部标识） */
+	id: string
+	/** 点位名称 */
+	name: string
+	/** 点位描述 */
+	description?: string
+	/** 数据类型 */
+	dataType: 'boolean' | 'number' | 'string' | 'json'
+	/** 单位 */
+	unit?: string
+	/** 默认值 */
+	defaultValue?: any
+	/** 是否必需 */
+	required?: boolean
+	/** 数值范围（仅number类型） */
+	range?: {
+		min?: number
+		max?: number
+	}
+}
+
+/**
  * 组件配置
  */
 export interface ComponentConfig {
@@ -75,6 +102,8 @@ export interface ComponentConfig {
   ports?: any                    // X6接线桩配置
   props: ComponentProp[]         // 属性配置列表
   component?: any                // Vue 组件实例（可选，用于 Vue Shape 注册）
+  dataAdapter?: ComponentDataAdapter  // 数据适配器（可选，用于数据绑定）
+  points?: ComponentPoint[]      // 组件点位定义（组件需要的数据点）
 }
 
 /**

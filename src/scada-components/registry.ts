@@ -81,6 +81,13 @@ class ComponentRegistryManager {
   }
 
   /**
+   * 通过shape获取组件配置
+   */
+  getComponentByShape(shape: string): ComponentConfig | undefined {
+    return Object.values(this.registry).find(config => config.shape === shape)
+  }
+
+  /**
    * 获取所有组件
    */
   getAllComponents(): ComponentRegistry {

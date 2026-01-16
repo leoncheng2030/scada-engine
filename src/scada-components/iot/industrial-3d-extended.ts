@@ -78,7 +78,8 @@ export const Conveyor3DComponent: ComponentConfig = {
         { label: '停止', value: false },
         { label: '运行', value: 'running' }
       ],
-      description: '传送带运行状态'
+      description: '传送带运行状态',
+      bindable: true
     },
     {
       key: 'speed',
@@ -88,7 +89,8 @@ export const Conveyor3DComponent: ComponentConfig = {
       defaultValue: 10,
       min: 0,
       max: 100,
-      description: '传送带运行速度'
+      description: '传送带运行速度',
+      bindable: true
     },
     {
       key: 'direction',
@@ -100,7 +102,8 @@ export const Conveyor3DComponent: ComponentConfig = {
         { label: '正向', value: 'forward' },
         { label: '反向', value: 'reverse' }
       ],
-      description: '传送带运行方向'
+      description: '传送带运行方向',
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -117,6 +120,50 @@ export const Conveyor3DComponent: ComponentConfig = {
       path: 'data.property',
       defaultValue: '',
       description: '绑定的设备属性名称'
+    }
+  ],
+  points: [
+    {
+      id: 'status',
+      name: '运行状态',
+      description: '传送带当前运行状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'speed',
+      name: '运行速度',
+      description: '传送带当前运行速度',
+      dataType: 'number',
+      unit: 'm/min',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 100 }
+    },
+    {
+      id: 'direction',
+      name: '运行方向',
+      description: '传送带运行方向',
+      dataType: 'string',
+      defaultValue: 'forward',
+      required: false
+    },
+    {
+      id: 'load',
+      name: '负载状态',
+      description: '传送带上是否有物体',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
+    },
+    {
+      id: 'alarm',
+      name: '告警状态',
+      description: '是否处于告警状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
     }
   ]
 }
@@ -182,7 +229,8 @@ export const AlarmLight3DComponent: ComponentConfig = {
         { label: '正常', value: false },
         { label: '报警', value: 'active' }
       ],
-      description: '报警灯激活状态'
+      description: '报警灯激活状态',
+      bindable: true
     },
     {
       key: 'mode',
@@ -195,7 +243,8 @@ export const AlarmLight3DComponent: ComponentConfig = {
         { label: '闪烁', value: 'flashing' },
         { label: '持续', value: 'steady' }
       ],
-      description: '报警灯工作模式'
+      description: '报警灯工作模式',
+      bindable: true
     },
     {
       key: 'color',
@@ -203,7 +252,8 @@ export const AlarmLight3DComponent: ComponentConfig = {
       type: 'color',
       path: 'data.color',
       defaultValue: '#ef4444',
-      description: '报警灯颜色'
+      description: '报警灯颜色',
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -220,6 +270,33 @@ export const AlarmLight3DComponent: ComponentConfig = {
       path: 'data.property',
       defaultValue: '',
       description: '绑定的设备属性名称'
+    }
+  ],
+  points: [
+    {
+      id: 'status',
+      name: '报警状态',
+      description: '报警灯当前状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'mode',
+      name: '报警模式',
+      description: '报警灯工作模式',
+      dataType: 'string',
+      defaultValue: 'rotating',
+      required: false
+    },
+    {
+      id: 'level',
+      name: '报警级别',
+      description: '报警级别 (0-正常, 1-警告, 2-危险, 3-严重)',
+      dataType: 'number',
+      defaultValue: 0,
+      required: false,
+      range: { min: 0, max: 3 }
     }
   ]
 }
@@ -283,7 +360,8 @@ export const TemperatureSensor3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.temperature',
       defaultValue: 25,
-      description: '当前测量温度值'
+      description: '当前测量温度值',
+      bindable: true
     },
     {
       key: 'maxTemp',
@@ -332,6 +410,43 @@ export const TemperatureSensor3DComponent: ComponentConfig = {
       path: 'data.property',
       defaultValue: '',
       description: '绑定的设备属性名称'
+    }
+  ],
+  points: [
+    {
+      id: 'temperature',
+      name: '温度',
+      description: '当前测量温度值',
+      dataType: 'number',
+      unit: '℃',
+      defaultValue: 25,
+      required: true
+    },
+    {
+      id: 'alarm_high',
+      name: '高温报警',
+      description: '是否超过高温阈值',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
+    },
+    {
+      id: 'alarm_low',
+      name: '低温报警',
+      description: '是否低于低温阈值',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
+    },
+    {
+      id: 'quality',
+      name: '信号质量',
+      description: '传感器信号质量 (0-100)',
+      dataType: 'number',
+      unit: '%',
+      defaultValue: 100,
+      required: false,
+      range: { min: 0, max: 100 }
     }
   ]
 }
@@ -412,7 +527,8 @@ export const Cylinder3DComponent: ComponentConfig = {
         { label: '伸出', value: 'extend' },
         { label: '缩回', value: 'retract' }
       ],
-      description: '气缸动作指令'
+      description: '气缸动作指令',
+      bindable: true
     },
     {
       key: 'position',
@@ -421,7 +537,8 @@ export const Cylinder3DComponent: ComponentConfig = {
       path: 'data.position',
       defaultValue: 0,
       min: 0,
-      description: '活塞杆当前位置'
+      description: '活塞杆当前位置',
+      bindable: true
     },
     {
       key: 'stroke',
@@ -458,6 +575,50 @@ export const Cylinder3DComponent: ComponentConfig = {
       path: 'data.property',
       defaultValue: '',
       description: '绑定的设备属性名称'
+    }
+  ],
+  points: [
+    {
+      id: 'action',
+      name: '动作指令',
+      description: '气缸当前动作指令',
+      dataType: 'string',
+      defaultValue: 'stop',
+      required: true
+    },
+    {
+      id: 'position',
+      name: '当前位置',
+      description: '活塞杆当前位置',
+      dataType: 'number',
+      unit: 'mm',
+      defaultValue: 0,
+      required: true
+    },
+    {
+      id: 'extended',
+      name: '伸出到位',
+      description: '活塞杆是否已伸出到位',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
+    },
+    {
+      id: 'retracted',
+      name: '缩回到位',
+      description: '活塞杆是否已缩回到位',
+      dataType: 'boolean',
+      defaultValue: true,
+      required: false
+    },
+    {
+      id: 'pressure',
+      name: '气压',
+      description: '工作气压',
+      dataType: 'number',
+      unit: 'bar',
+      defaultValue: 6,
+      required: false
     }
   ]
 }

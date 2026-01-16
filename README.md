@@ -1,18 +1,22 @@
 # @nywqs/scada-engine
 
+[![npm version](https://img.shields.io/npm/v/@nywqs/scada-engine.svg)](https://www.npmjs.com/package/@nywqs/scada-engine)
+[![license](https://img.shields.io/npm/l/@nywqs/scada-engine.svg)](https://github.com/leoncheng2030/scada-engine/blob/main/LICENSE)
+
 基于 AntV X6 + Vue 3 的自研 SCADA 组态引擎
 
 ## 特性
 
-- 可视化编辑器：拖拽式组态界面设计
-- 丰富组件库：内置基础图形、IoT组件、图表等
-- 数据绑定：支持设备数据点绑定和实时更新
-- 事件系统：灵活的事件配置和交互响应
-- TypeScript：完整的类型定义支持
-- 响应式：基于 Vue 3 Composition API
-- 动画引擎：支持节点和连线动画效果
-- 预览模式：支持编辑模式和预览模式切换
-- 数据集成：支持多种数据源集成方式
+- ✅ **可视化编辑器**：拖拽式组态界面设计
+- 🎭 **丰富组件库**：内置基础图形、IoT组件、图表等
+- 🔗 **数据绑定**：支持设备数据点绑定和实时更新
+- ⚡ **事件系统**：灵活的事件配置和交互响应
+- 📝 **TypeScript**：完整的类型定义支持
+- 🔄 **响应式**：基于 Vue 3 Composition API
+- 🎨 **动画引擎**：支持节点和连线动画效果
+- 👀 **预览模式**：支持编辑模式和预览模式切换
+- 📡 **数据集成**：支持多种数据源集成方式
+- 📱 **自适应**：画布自动适配不同屏幕尺寸
 
 ## 安装
 
@@ -33,6 +37,12 @@ npm install vue@^3.4.0 vue-router@^4.6.0 @antv/x6@^2.18.0 echarts@^5.5.0 pinia@^
 ```
 
 ## 快速开始
+
+### 安装
+
+```bash
+npm install @nywqs/scada-engine@latest
+```
 
 ### 全局注册
 
@@ -616,10 +626,15 @@ npm publish
 
 ## 版本历史
 
-### 1.1.21 (2026-01-06)
-- 设备数据集成：支持通过deviceData属性和updateDeviceData方法集成外部设备数据
-- 修复预览按钮事件触发问题
-- 优化路由跳转逻辑
+完整的版本更新记录请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 1.1.27 (2025-01-16)
+- 修复 `ScadaCanvas.vue` 中 `calculateContainerSize` 函数的 TypeScript 类型声明
+- 为函数添加明确的返回类型注解，消除 TS6133 警告
+
+### 1.1.26 (2025-01-16)
+- 创建版本更新历史记录文档 CHANGELOG.md
+- 建立版本发布规范和记录模板
 
 ### 1.1.20 (2026-01-06)
 - 画布自适应缩放：支持不同分辨率设备自动适配显示

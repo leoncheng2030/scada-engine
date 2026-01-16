@@ -1,89 +1,64 @@
 <template>
-	<div class="event-card">
-		<div class="event-card-header" @click="$emit('toggle-collapse')">
-			<div class="header-left">
-				<span class="collapse-icon">{{ isCollapsed ? '▶' : '▼' }}</span>
-				<span class="event-title">绑定{{ index + 1 }}</span>
+	<!-- 表格行样式 -->
+	<div class="binding-row">
+		<!-- 点位列 - 两行显示 -->
+		<div class="binding-col-point" @click="showSelector = true">
+			<div v-if="selectedPointInfo" class="cell-content-vertical">
+				<span class="point-name">{{ selectedPointInfo.pointName }}</span>
+				<span class="point-id">{{ selectedPointInfo.pointId }}</span>
 			</div>
-			<button 
-				class="btn-remove" 
-				@click.stop="$emit('remove')" 
-				title="删除绑定"
-			>🗑</button>
+			<span v-else class="cell-placeholder">选择点位</span>
 		</div>
-
-		<!-- 绑定配置内容 -->
-		<div v-show="!isCollapsed" class="event-card-body">
-			<!-- 设备点位选择（触发器） -->
-			<div class="property-item">
-				<label>设备点位</label>
-				<div class="point-selector-trigger" @click="showSelector = true">
-					<div v-if="selectedPointInfo" class="selected-point">
-						<div class="point-main">
-							<span class="device-name">{{ selectedPointInfo.deviceName }}</span>
-							<span class="point-name">{{ selectedPointInfo.pointName }}</span>
-						</div>
-						<div class="point-details">
-							<span class="point-code">{{ selectedPointInfo.pointCode }}</span>
-							<span v-if="selectedPointInfo.pointUnit" class="point-unit">{{ selectedPointInfo.pointUnit }}</span>
-						</div>
-					</div>
-					<div v-else class="placeholder">
-						点击选择设备点位
-					</div>
-					<span class="selector-arrow">›</span>
-				</div>
-			</div>
-			
-			<!-- 设备点位选择弹窗 -->
-			<DevicePointSelector
-				v-model:visible="showSelector"
-				v-model="pointIdValue"
-				:device-id="props.nodeDeviceId || ''"
-				:device-name="props.nodeDeviceName"
-				:device-data="deviceDataComputed"
-				@confirm="handlePointSelect"
-			/>
-			<div class="property-item">
-				<label>目标属性</label>
-				<select :value="binding.targetProperty || ''" @change="$emit('update-field', 'targetProperty', $event)">
-					<option value="">选择属性</option>
-					<option v-for="prop in nodeProperties" :key="prop.key" :value="prop.key">
-						{{ prop.label }}
-					</option>
-				</select>
-			</div>
-			
-			<!-- 映射配置（触发器） -->
-			<div class="property-item">
-				<label>值映射配置</label>
-				<div class="mapping-trigger" @click="showMappingConfig = true">
-					<div v-if="localMapping.type !== 'direct'" class="mapping-summary">
-						<span class="mapping-type-label">{{ getMappingTypeLabel(localMapping.type) }}</span>
-						<span class="mapping-detail">{{ getMappingSummary() }}</span>
-					</div>
-					<div v-else class="placeholder">
-						点击配置值映射
-					</div>
-					<span class="selector-arrow">›</span>
-				</div>
-			</div>
-			
-			<!-- 映射配置弹窗 -->
-			<MappingConfigurator 
-				v-model:visible="showMappingConfig"
-				v-model="localMapping"
-				@confirm="handleMappingUpdate"
-			/>
+		
+		<!-- 属性列 -->
+		<div class="binding-col-property">
+			<select 
+				class="table-select" 
+				:value="binding.targetProperty || ''" 
+				@change="$emit('update-field', 'targetProperty', $event)"
+			>
+				<option value="">选择属性</option>
+				<option v-for="prop in nodeProperties" :key="prop.key" :value="prop.key">
+					{{ prop.label }}
+				</option>
+			</select>
 		</div>
+		
+		<!-- 映射列 -->
+		<div class="binding-col-mapping" @click="showMappingConfig = true">
+			<span v-if="localMapping.type !== 'direct'" class="mapping-label">
+				{{ getMappingTypeLabel(localMapping.type) }}
+			</span>
+			<span v-else class="cell-placeholder">直接映射</span>
+		</div>
+		
+		<!-- 操作列 -->
+		<div class="binding-col-actions">
+			<button class="btn-delete" @click="$emit('remove')" title="删除">🗑</button>
+		</div>
+		
+		<!-- 组件点位选择弹窗 -->
+		<ComponentPointSelector
+			v-model:visible="showSelector"
+			v-model="pointIdValue"
+			:component-points="componentPoints"
+			@confirm="handlePointSelect"
+		/>
+		
+		<!-- 映射配置弹窗 -->
+		<MappingConfigurator 
+			v-model:visible="showMappingConfig"
+			v-model="localMapping"
+			@confirm="handleMappingUpdate"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import DevicePointSelector from './DevicePointSelector.vue'
+import ComponentPointSelector from './ComponentPointSelector.vue'
 import MappingConfigurator from './MappingConfigurator.vue'
-import type { Device, DevicePoint } from '../types/device'
+import type { ComponentPoint } from '../scada-components/types'
 import { MappingType, ValueType, type BindingConfig, type MappingConfig } from '../types/binding'
 
 interface NodeProperty {
@@ -97,9 +72,7 @@ const props = defineProps<{
 	index: number
 	isCollapsed: boolean
 	nodeProperties: NodeProperty[]
-	deviceData?: any
-	nodeDeviceId?: string    // 当前节点的设备ID
-	nodeDeviceName?: string  // 当前节点的设备名称
+	componentPoints: ComponentPoint[]  // 组件预定义的点位列表
 }>()
 
 const emit = defineEmits<{
@@ -108,7 +81,7 @@ const emit = defineEmits<{
 	'update-field': [field: string, event: Event]
 }>()
 
-// 绑定值（只存储 pointId）
+// 绑定值（存储组件点位ID）
 const pointIdValue = ref('')
 const showSelector = ref(false)
 const showMappingConfig = ref(false)
@@ -117,30 +90,15 @@ const localMapping = ref<MappingConfig>(props.binding.mapping || {
 	valueType: ValueType.NUMBER
 })
 
-// 初始化时解析 devicePointId
+// 初始化时加载 pointId
 if (props.binding.devicePointId) {
-	const parts = props.binding.devicePointId.split(':')
-	if (parts.length === 2) {
-		pointIdValue.value = parts[1]  // 只取 pointId
-	} else {
-		pointIdValue.value = props.binding.devicePointId  // 如果已经是 pointId
-	}
+	pointIdValue.value = props.binding.devicePointId  // 直接使用点位ID
 }
-
-// 使用传递的设备数据
-const deviceDataComputed = computed(() => {
-	return props.deviceData || {}
-})
 
 // 监听外部变化
 watch(() => props.binding.devicePointId, (newVal) => {
 	if (newVal) {
-		const parts = newVal.split(':')
-		if (parts.length === 2) {
-			pointIdValue.value = parts[1]
-		} else {
-			pointIdValue.value = newVal
-		}
+		pointIdValue.value = newVal  // 直接使用点位ID
 	} else {
 		pointIdValue.value = ''
 	}
@@ -154,49 +112,34 @@ watch(() => props.binding.mapping, (newVal) => {
 
 // 解析选中的点位信息（用于显示）
 const selectedPointInfo = computed(() => {
-	if (!pointIdValue.value || !props.nodeDeviceId) return null
+	if (!pointIdValue.value) return null
 	
-	const deviceId = props.nodeDeviceId
-	const pointId = pointIdValue.value
-	
-	// 使用传递的设备数据
-	let device = null
-	let point = null
-	
-	if (props.deviceData && props.deviceData.devices) {
-		device = props.deviceData.devices.find((d: any) => d.id === deviceId)
-		if (device) {
-			point = device.points?.find((p: any) => p.id === pointId) || null
-		}
-	}
-	
-	if (!device || !point) return null
+	// 从组件点位列表中查找
+	const point = props.componentPoints.find(p => p.id === pointIdValue.value)
+	if (!point) return null
 	
 	return {
-		deviceName: device.name,
+		pointId: point.id,
 		pointName: point.name,
-		pointCode: point.code,
+		dataType: point.dataType,
 		pointUnit: point.unit
 	}
 })
 
 // 处理点位选择
-const handlePointSelect = (pointId: string, point: DevicePoint) => {
-	// 更新设备点位（保存为 deviceId:pointId 格式）
-	const devicePointId = `${props.nodeDeviceId}:${pointId}`
+const handlePointSelect = (pointId: string, point: ComponentPoint) => {
+	// pointId 就是组件点位ID
 	const event = new Event('change')
 	Object.defineProperty(event, 'target', {
-		value: { value: devicePointId },
+		value: { value: pointId },
 		writable: false
 	})
 	emit('update-field', 'devicePointId', event)
 	
-	console.log('选择了点位:', {
-		deviceId: props.nodeDeviceId,
-		pointId: pointId,
+	console.log('选择了组件点位:', {
+		pointId,
 		pointName: point.name,
-		dataType: point.dataType,
-		accessMode: point.accessMode
+		dataType: point.dataType
 	})
 }
 
@@ -220,269 +163,148 @@ const getMappingTypeLabel = (type: string) => {
 	}
 	return labels[type] || type
 }
-
-// 获取映射摘要
-const getMappingSummary = () => {
-	const mapping = localMapping.value
-	
-	if (mapping.type === 'boolean') {
-		return `True:${mapping.trueValue || 'true'} / False:${mapping.falseValue || 'false'}`
-	}
-	
-	if (mapping.type === 'range' && mapping.rangeRules) {
-		return `${mapping.rangeRules.length} 个范围规则`
-	}
-	
-	if (mapping.type === 'enum' && mapping.enumMappings) {
-		return `${Object.keys(mapping.enumMappings).length} 个枚举映射`
-	}
-	
-	return ''
-}
 </script>
 
 <style scoped>
-.event-card {
-	background: #0f172a;
-	border: 1px solid #334155;
-	border-radius: 6px;
-	padding: 12px;
-	transition: all 0.2s;
-}
-
-.event-card:hover {
-	border-color: #3b82f6;
-}
-
-.event-card-header {
+/* 表格行样式 */
+.binding-row {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 12px;
-	padding-bottom: 8px;
+	background: #0f172a;
 	border-bottom: 1px solid #1e293b;
-	cursor: pointer;
-	user-select: none;
-	transition: all 0.2s;
+	transition: background 0.2s;
+	min-height: 48px;
+	padding: 4px 0;
 }
 
-.event-card-header:hover {
-	background: rgba(59, 130, 246, 0.05);
-	margin: -4px -8px 8px -8px;
-	padding: 4px 8px 12px 8px;
-	border-radius: 4px;
-}
-
-.header-left {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.collapse-icon {
-	font-size: 10px;
-	color: #64748b;
-	transition: transform 0.2s;
-	display: inline-block;
-	width: 12px;
-}
-
-.event-title {
-	font-size: 14px;
-	font-weight: 600;
-	color: #e2e8f0;
-}
-
-.btn-remove {
-	width: 24px;
-	height: 24px;
-	background: transparent;
-	border: 1px solid #475569;
-	border-radius: 4px;
-	color: #94a3b8;
-	cursor: pointer;
-	font-size: 18px;
-	line-height: 1;
-	transition: all 0.2s;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.btn-remove:hover {
-	background: #ef4444;
-	border-color: #ef4444;
-	color: #fff;
-}
-
-.event-card-body {
-	animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-	from {
-		opacity: 0;
-		max-height: 0;
-		overflow: hidden;
-	}
-	to {
-		opacity: 1;
-		max-height: 2000px;
-	}
-}
-
-.property-item {
-	margin-bottom: 12px;
-}
-
-.property-item:last-child {
-	margin-bottom: 0;
-}
-
-.property-item label {
-	display: block;
-	font-size: 12px;
-	color: #cbd5e1;
-	margin-bottom: 6px;
-}
-
-.property-item select {
-	width: 100%;
-	padding: 8px 12px;
-	background: #0f172a;
-	border: 1px solid #334155;
-	border-radius: 4px;
-	color: #e2e8f0;
-	font-size: 13px;
-	transition: all 0.2s;
-}
-
-.property-item select:focus {
-	outline: none;
-	border-color: #3b82f6;
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* 点位选择触发器 */
-.point-selector-trigger {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-	padding: 10px 12px;
-	background: #0f172a;
-	border: 1px solid #334155;
-	border-radius: 4px;
-	cursor: pointer;
-	transition: all 0.2s;
-	min-height: 42px;
-}
-
-.point-selector-trigger:hover {
-	border-color: #3b82f6;
+.binding-row:hover {
 	background: #1e293b;
 }
 
-.selected-point {
+/* 列宽度 */
+.binding-col-point {
 	flex: 1;
+	min-width: 70px;
+	padding: 4px 8px;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.binding-col-point:hover {
+	background: rgba(59, 130, 246, 0.1);
+}
+
+.binding-col-property {
+	flex: 1.5;
+	min-width: 90px;
+	padding: 4px 10px;
+}
+
+.binding-col-mapping {
+	flex: 1.2;
+	min-width: 80px;
+	padding: 4px 8px;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.binding-col-mapping:hover {
+	background: rgba(59, 130, 246, 0.1);
+}
+
+.binding-col-actions {
+	width: 40px;
+	flex-shrink: 0;
+	text-align: center;
+	padding: 4px;
+}
+
+/* 单元格内容 - 垂直布局 */
+.cell-content-vertical {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-}
-
-.point-main {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 13px;
-}
-
-.device-name {
-	color: #94a3b8;
-	font-size: 12px;
+	gap: 2px;
 }
 
 .point-name {
 	color: #e2e8f0;
-	font-weight: 500;
-}
-
-.point-details {
-	display: flex;
-	gap: 8px;
 	font-size: 11px;
-	color: #64748b;
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.point-code {
+.point-id {
 	font-family: monospace;
-}
-
-.point-unit {
-	color: #3b82f6;
-}
-
-.placeholder {
+	font-size: 9px;
 	color: #64748b;
-	font-size: 13px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.selector-arrow {
-	font-size: 18px;
+.cell-placeholder {
 	color: #64748b;
-	transition: all 0.2s;
-}
-
-.point-selector-trigger:hover .selector-arrow {
-	color: #3b82f6;
-	transform: translateX(2px);
-}
-
-/* 映射配置触发器 */
-.mapping-trigger {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-	padding: 10px 12px;
-	background: #0f172a;
-	border: 1px solid #334155;
-	border-radius: 4px;
-	cursor: pointer;
-	transition: all 0.2s;
-	min-height: 42px;
-}
-
-.mapping-trigger:hover {
-	border-color: #3b82f6;
-	background: #1e293b;
-}
-
-.mapping-summary {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.mapping-type-label {
-	font-size: 13px;
-	color: #e2e8f0;
-	font-weight: 500;
-}
-
-.mapping-detail {
 	font-size: 11px;
-	color: #64748b;
 }
 
-.mapping-trigger .placeholder {
-	color: #64748b;
-	font-size: 13px;
+.mapping-label {
+	color: #e2e8f0;
+	font-size: 11px;
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.mapping-trigger:hover .selector-arrow {
-	color: #3b82f6;
-	transform: translateX(2px);
+/* 下拉选择框 */
+.table-select {
+	width: 100%;
+	padding: 4px 6px;
+	background: transparent;
+	border: 1px solid #334155;
+	border-radius: 3px;
+	color: #e2e8f0;
+	font-size: 11px;
+	transition: all 0.2s;
+}
+
+.table-select:hover {
+	border-color: #3b82f6;
+}
+
+.table-select:focus {
+	outline: none;
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.table-select option {
+	background: #0f172a;
+	color: #e2e8f0;
+}
+
+/* 删除按钮 */
+.btn-delete {
+	width: 24px;
+	height: 24px;
+	background: transparent;
+	border: 1px solid #475569;
+	border-radius: 3px;
+	color: #94a3b8;
+	cursor: pointer;
+	font-size: 14px;
+	transition: all 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto;
+}
+
+.btn-delete:hover {
+	background: #ef4444;
+	border-color: #ef4444;
+	color: #fff;
 }
 </style>

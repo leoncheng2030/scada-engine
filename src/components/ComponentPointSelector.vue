@@ -4,7 +4,7 @@
 		<div class="modal-container" @click.stop>
 			<!-- 弹窗头部 -->
 			<div class="modal-header">
-				<h3>选择点位</h3>
+				<h3>选择组件点位</h3>
 				<button class="btn-close" @click="handleClose">✕</button>
 			</div>
 			
@@ -14,13 +14,13 @@
 				<div class="point-list-panel">
 					<div class="panel-header">
 						<h4>点位列表</h4>
-						<span class="point-count">{{ allPointsWithDevice.length }}</span>
+						<span class="point-count">{{ componentPoints.length }}</span>
 					</div>
 					<div class="search-box">
 						<input 
 							v-model="pointSearchQuery" 
 							type="text" 
-							placeholder="搜索设备或点位..."
+							placeholder="搜索点位..."
 							class="search-input"
 						/>
 					</div>
@@ -30,30 +30,28 @@
 						</div>
 						<div
 							v-else
-							v-for="pointWithDevice in filteredPoints"
-							:key="pointWithDevice.devicePointId"
+							v-for="point in filteredPoints"
+							:key="point.id"
 							:class="['point-item', { 
-								active: selectedPointDeviceId === pointWithDevice.devicePointId,
-								disabled: !pointWithDevice.point.enabled
+								active: selectedPointId === point.id
 							}]"
-							@click="selectPoint(pointWithDevice)"
+							@click="selectPoint(point)"
 						>
 							<div class="point-info">
-								<div class="device-tag">{{ pointWithDevice.deviceName }}</div>
 								<div class="point-name">
-									{{ pointWithDevice.point.name }}
-									<span class="access-mode" :class="pointWithDevice.point.accessMode">
-										{{ getAccessModeLabel(pointWithDevice.point.accessMode) }}
-									</span>
+									{{ point.name }}
+									<span v-if="point.required" class="required-badge">必需</span>
 								</div>
 								<div class="point-meta">
-									<span class="point-code">{{ pointWithDevice.point.code }}</span>
-									<span v-if="pointWithDevice.point.unit" class="point-unit">{{ pointWithDevice.point.unit }}</span>
-									<span class="point-type">{{ getDataTypeLabel(pointWithDevice.point.dataType) }}</span>
+									<span class="point-code">{{ point.id }}</span>
+									<span v-if="point.unit" class="point-unit">{{ point.unit }}</span>
+									<span class="point-type">{{ getDataTypeLabel(point.dataType) }}</span>
 								</div>
-								<div v-if="pointWithDevice.point.value !== undefined" class="point-value">
-									当前值: <span class="value">{{ formatValue(pointWithDevice.point) }}</span>
-									<span :class="['quality', pointWithDevice.point.quality]">{{ pointWithDevice.point.quality }}</span>
+								<div v-if="point.description" class="point-description">
+									{{ point.description }}
+								</div>
+								<div v-if="point.range" class="point-range">
+									范围: {{ point.range.min !== undefined ? point.range.min : '-' }} ~ {{ point.range.max !== undefined ? point.range.max : '-' }}
 								</div>
 							</div>
 						</div>
@@ -66,7 +64,7 @@
 				<button class="btn-cancel" @click="handleClose">取消</button>
 				<button 
 					class="btn-confirm" 
-					:disabled="!selectedPointDeviceId"
+					:disabled="!selectedPointId"
 					@click="handleConfirm"
 				>
 					确定
@@ -78,75 +76,45 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Device, DevicePoint } from '../types/device'
+import type { ComponentPoint } from '../scada-components/types'
 
 const props = defineProps<{
-	visible: boolean         // 是否显示弹窗
-	modelValue?: string      // 当前选中的点位ID (deviceId:pointId 格式)
-	deviceData?: any         // 设备数据（包含所有设备）
-	dataSourceId?: string    // 数据源ID（用于显示）
+	visible: boolean              // 是否显示弹窗
+	modelValue?: string           // 当前选中的点位ID
+	componentPoints: ComponentPoint[]  // 组件预定义的点位列表
 }>()
 
 const emit = defineEmits<{
 	'update:visible': [value: boolean]
 	'update:modelValue': [value: string]
-	'confirm': [devicePointId: string, point: DevicePoint]  // 返回 deviceId:pointId 格式
+	'confirm': [pointId: string, point: ComponentPoint]  // 返回点位ID和点位对象
 }>()
 
-// 设备信息
-interface PointWithDevice {
-	deviceId: string
-	deviceName: string
-	point: DevicePoint
-	devicePointId: string  // deviceId:pointId 格式
-}
-
-const selectedPointDeviceId = ref<string>('')  // 当前选中的 deviceId:pointId
+const selectedPointId = ref<string>('')  // 当前选中的点位ID
 const pointSearchQuery = ref('')
-
-// 获取所有设备的所有点位（带设备信息）
-const allPointsWithDevice = computed<PointWithDevice[]>(() => {
-	if (!props.deviceData?.devices) return []
-	
-	const result: PointWithDevice[] = []
-	for (const device of props.deviceData.devices) {
-		if (!device.points || device.points.length === 0) continue
-		
-		for (const point of device.points) {
-			result.push({
-				deviceId: device.id,
-				deviceName: device.name,
-				point: point,
-				devicePointId: `${device.id}:${point.id}`
-			})
-		}
-	}
-	return result
-})
 
 // 初始化选中状态
 watch(() => props.modelValue, (newValue) => {
 	if (newValue) {
-		selectedPointDeviceId.value = newValue  // deviceId:pointId 格式
+		selectedPointId.value = newValue
 	}
 }, { immediate: true })
 
 // 过滤点位
 const filteredPoints = computed(() => {
-	if (!pointSearchQuery.value) return allPointsWithDevice.value
+	if (!pointSearchQuery.value) return props.componentPoints || []
 	
 	const query = pointSearchQuery.value.toLowerCase()
-	return allPointsWithDevice.value.filter(item =>
-		item.deviceName?.toLowerCase().includes(query) ||
-		item.point.name?.toLowerCase().includes(query) ||
-		item.point.code?.toLowerCase().includes(query)
+	return (props.componentPoints || []).filter(point =>
+		point.name?.toLowerCase().includes(query) ||
+		point.id?.toLowerCase().includes(query) ||
+		point.description?.toLowerCase().includes(query)
 	)
 })
 
 // 选择点位
-const selectPoint = (pointWithDevice: PointWithDevice) => {
-	if (!pointWithDevice.point.enabled) return
-	selectedPointDeviceId.value = pointWithDevice.devicePointId
+const selectPoint = (point: ComponentPoint) => {
+	selectedPointId.value = point.id
 }
 
 // 关闭弹窗
@@ -156,25 +124,15 @@ const handleClose = () => {
 
 // 确认选择
 const handleConfirm = () => {
-	if (!selectedPointDeviceId.value) return
+	if (!selectedPointId.value) return
 	
 	// 查找选中的点位
-	const selected = allPointsWithDevice.value.find(item => item.devicePointId === selectedPointDeviceId.value)
+	const selected = props.componentPoints.find(p => p.id === selectedPointId.value)
 	if (!selected) return
 	
-	emit('update:modelValue', selectedPointDeviceId.value)
-	emit('confirm', selectedPointDeviceId.value, selected.point)
+	emit('update:modelValue', selectedPointId.value)
+	emit('confirm', selectedPointId.value, selected)
 	emit('update:visible', false)
-}
-
-// 获取访问权限标签
-const getAccessModeLabel = (mode: string) => {
-	const labels: Record<string, string> = {
-		read: '只读',
-		write: '只写',
-		readWrite: '读写'
-	}
-	return labels[mode] || mode
 }
 
 // 获取数据类型标签
@@ -186,16 +144,6 @@ const getDataTypeLabel = (type: string) => {
 		json: 'JSON'
 	}
 	return labels[type] || type
-}
-
-// 格式化值显示
-const formatValue = (point: DevicePoint) => {
-	if (point.value === undefined || point.value === null) return '-'
-	if (point.dataType === 'boolean') return point.value ? '是' : '否'
-	if (point.dataType === 'number' && point.precision !== undefined) {
-		return Number(point.value).toFixed(point.precision)
-	}
-	return String(point.value)
 }
 </script>
 
@@ -436,18 +384,6 @@ const formatValue = (point: DevicePoint) => {
 	gap: 6px;
 }
 
-.device-tag {
-	display: inline-block;
-	padding: 2px 8px;
-	margin-bottom: 4px;
-	background: rgba(59, 130, 246, 0.2);
-	border: 1px solid rgba(59, 130, 246, 0.4);
-	border-radius: 3px;
-	font-size: 10px;
-	color: #60a5fa;
-	font-weight: 500;
-}
-
 .point-name {
 	display: flex;
 	align-items: center;
@@ -457,26 +393,13 @@ const formatValue = (point: DevicePoint) => {
 	color: #e2e8f0;
 }
 
-.access-mode {
+.required-badge {
 	font-size: 10px;
 	padding: 2px 6px;
 	border-radius: 3px;
-	font-weight: 400;
-}
-
-.access-mode.read {
-	background: rgba(59, 130, 246, 0.2);
-	color: #60a5fa;
-}
-
-.access-mode.write {
 	background: rgba(239, 68, 68, 0.2);
 	color: #f87171;
-}
-
-.access-mode.readWrite {
-	background: rgba(16, 185, 129, 0.2);
-	color: #34d399;
+	font-weight: 400;
 }
 
 .point-meta {
@@ -500,37 +423,15 @@ const formatValue = (point: DevicePoint) => {
 	border-radius: 3px;
 }
 
-.point-value {
-	font-size: 12px;
+.point-description {
+	font-size: 11px;
 	color: #94a3b8;
+	line-height: 1.4;
 }
 
-.point-value .value {
-	color: #e2e8f0;
-	font-weight: 500;
-	margin: 0 4px;
-}
-
-.quality {
-	font-size: 10px;
-	padding: 2px 6px;
-	border-radius: 3px;
-	margin-left: 8px;
-}
-
-.quality.good {
-	background: rgba(16, 185, 129, 0.2);
-	color: #34d399;
-}
-
-.quality.bad {
-	background: rgba(239, 68, 68, 0.2);
-	color: #f87171;
-}
-
-.quality.uncertain {
-	background: rgba(245, 158, 11, 0.2);
-	color: #fbbf24;
+.point-range {
+	font-size: 11px;
+	color: #94a3b8;
 }
 
 /* 空状态 */

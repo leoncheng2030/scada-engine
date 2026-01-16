@@ -1,6 +1,6 @@
 /* ==================== 主容器样式 ==================== */
 .property-panel {
-	width: 300px;
+	width: 380px;
 	height: 100%;
 	background: #1e293b;
 	border-left: 1px solid #0f3460;
@@ -1050,4 +1050,55 @@
 		opacity: 1;
 		transform: translateY(0);
 	}
+}
+
+/* ==================== 表格式绑定列表 ==================== */
+.binding-table {
+	background: #0f172a;
+	border: 1px solid #334155;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.binding-table-header {
+	display: flex;
+	align-items: center;
+	background: rgba(59, 130, 246, 0.1);
+	border-bottom: 1px solid #334155;
+	padding: 8px 0;
+	font-size: 10px;
+	font-weight: 600;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.binding-table-body {
+	display: flex;
+	flex-direction: column;
+}
+
+/* 表头列宽度 - 与表体保持一致 */
+.binding-col-point {
+	flex: 1;
+	min-width: 70px;
+	padding: 0 8px;
+}
+
+.binding-col-property {
+	flex: 1.5;
+	min-width: 90px;
+	padding: 0 10px;
+}
+
+.binding-col-mapping {
+	flex: 1.2;
+	min-width: 80px;
+	padding: 0 8px;
+}
+
+.binding-col-actions {
+	width: 40px;
+	flex-shrink: 0;
+	text-align: center;
 }

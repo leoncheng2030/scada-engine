@@ -84,22 +84,31 @@
 							<span>暂无点位映射，请先选择设备后点击上方按钮添加</span>
 						</div>
 
-						<div class="event-list">
-							<BindingCard
-								v-for="(binding, index) in bindingList"
-								:key="index"
-								:binding="binding"
-								:index="index"
-								:is-collapsed="isBindingCollapsed(index)"
-								:node-properties="getNodeProperties()"
-								:event-list="eventList"
-								:device-data="currentDeviceData"
-								:node-device-id="currentDeviceId"
-								:node-device-name="currentDeviceName"
-								@toggle-collapse="toggleBindingCollapse(index)"
-								@remove="removeBinding(index)"
-								@update-field="(field, e) => updateBindingField(index, field, e)"
-							/>
+						<!-- 表格式布局 -->
+						<div v-else class="binding-table">
+							<!-- 表头 -->
+							<div class="binding-table-header">
+								<div class="binding-col-point">组件点位</div>
+								<div class="binding-col-property">目标属性</div>
+								<div class="binding-col-mapping">值映射</div>
+								<div class="binding-col-actions">操作</div>
+							</div>
+							
+							<!-- 表体 -->
+							<div class="binding-table-body">
+								<BindingCard
+									v-for="(binding, index) in bindingList"
+									:key="index"
+									:binding="binding"
+									:index="index"
+									:is-collapsed="isBindingCollapsed(index)"
+									:node-properties="getNodeProperties()"
+									:component-points="componentPoints"
+									@toggle-collapse="toggleBindingCollapse(index)"
+									@remove="removeBinding(index)"
+									@update-field="(field, e) => updateBindingField(index, field, e)"
+								/>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -173,6 +182,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import type { Node, Edge } from '@antv/x6'
 import type { BindingConfig as StandardBindingConfig } from '../types/binding'
+import type { ComponentPoint } from '../scada-components/types'
 import CanvasConfigPanel from './CanvasConfigPanel.vue'
 import BasicPropertiesTab from './BasicPropertiesTab.vue'
 import DataPropertiesTab from './DataPropertiesTab.vue'
@@ -184,6 +194,7 @@ import CustomCodeDialog from './CustomCodeDialog.vue'
 import WorkflowSelectorDialog from './WorkflowSelectorDialog.vue'
 import { generateEventId } from '../utils'
 import { dataSourceManager } from '../services/dataSourceManager'
+import { componentRegistry } from '../scada-components/registry'
 
 interface Props {
 	selectedNode: Node | null
@@ -256,43 +267,19 @@ const collapsedEvents = ref<Set<number>>(new Set())
 const bindingList = ref<StandardBindingConfig[]>([])
 const collapsedBindings = ref<Set<number>>(new Set())
 
-// 获取当前节点绑定的设备数据
-const currentDeviceData = computed(() => {
-	if (!props.selectedNode) return null
+// 获取组件的点位定义（用于 BindingCard）
+const componentPoints = computed<ComponentPoint[]>(() => {
+	if (!props.selectedNode) return []
 	
-	const nodeData = props.selectedNode.getData()
-	const dataBinding = nodeData?.dataBinding
+	// 直接使用 shape 查找组件配置
+	const shape = props.selectedNode.shape
+	if (!shape) return []
 	
-	if (!dataBinding?.dataSourceId || !dataBinding?.deviceId) return null
+	// 从组件注册表获取组件配置
+	const componentConfig = componentRegistry.getComponentByShape(shape)
+	if (!componentConfig || !componentConfig.points) return []
 	
-	// 从数据源管理器获取设备数据
-	const dataSource = dataSourceManager.getDataSource(dataBinding.dataSourceId)
-	if (!dataSource) return null
-	
-	const device = dataSource.devices.find(d => d.id === dataBinding.deviceId)
-	if (!device) return null
-	
-	// 返回符合 BindingCard 期望的格式
-	return {
-		devices: [{
-			id: device.id,
-			name: device.name,
-			points: device.points || []
-		}]
-	}
-})
-
-// 获取当前节点绑定的设备ID
-const currentDeviceId = computed(() => {
-	if (!props.selectedNode) return undefined
-	const nodeData = props.selectedNode.getData()
-	return nodeData?.dataBinding?.deviceId
-})
-
-// 获取当前设备名称
-const currentDeviceName = computed(() => {
-	if (!currentDeviceData.value?.devices?.[0]) return undefined
-	return currentDeviceData.value.devices[0].name
+	return componentConfig.points
 })
 
 // 监听选中节点变化，加载事件配置
@@ -501,7 +488,7 @@ const updateDynamicProp = (path: string, value: any) => {
 }
 
 // 更新数据源配置
-const updateDataSource = (config: { dataSourceId: string; deviceId: string }) => {
+const updateDataSource = (config: { dataSourceId: string }) => {
 	if (!props.selectedNode) return
 	
 	const data = { 

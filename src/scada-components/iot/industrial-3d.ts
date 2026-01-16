@@ -77,7 +77,8 @@ export const Motor3DComponent: ComponentConfig = {
       options: [
         { label: '停止', value: false },
         { label: '运行', value: 'running' }
-      ]
+      ],
+      bindable: true
     },
     {
       key: 'speed',
@@ -85,7 +86,8 @@ export const Motor3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.speed',
       defaultValue: 1500,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'power',
@@ -93,7 +95,8 @@ export const Motor3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.power',
       defaultValue: 7.5,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -108,6 +111,63 @@ export const Motor3DComponent: ComponentConfig = {
       type: 'text',
       path: 'data.property',
       defaultValue: ''
+    }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'status',
+      name: '运行状态',
+      description: '电机当前运行状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'speed',
+      name: '转速',
+      description: '电机当前转速',
+      dataType: 'number',
+      unit: 'rpm',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 5000 }
+    },
+    {
+      id: 'power',
+      name: '功率',
+      description: '电机当前功率',
+      dataType: 'number',
+      unit: 'kW',
+      defaultValue: 0,
+      required: false,
+      range: { min: 0 }
+    },
+    {
+      id: 'current',
+      name: '电流',
+      description: '电机运行电流',
+      dataType: 'number',
+      unit: 'A',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'temperature',
+      name: '温度',
+      description: '电机轴承温度',
+      dataType: 'number',
+      unit: '℃',
+      defaultValue: 25,
+      required: false
+    },
+    {
+      id: 'alarm',
+      name: '告警状态',
+      description: '是否处于告警状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
     }
   ]
 }
@@ -184,7 +244,8 @@ export const Valve3DComponent: ComponentConfig = {
       options: [
         { label: '关闭', value: false },
         { label: '开启', value: 'open' }
-      ]
+      ],
+      bindable: true
     },
     {
       key: 'openness',
@@ -193,7 +254,8 @@ export const Valve3DComponent: ComponentConfig = {
       path: 'data.openness',
       defaultValue: 0,
       min: 0,
-      max: 100
+      max: 100,
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -208,6 +270,53 @@ export const Valve3DComponent: ComponentConfig = {
       type: 'text',
       path: 'data.property',
       defaultValue: ''
+    }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'status',
+      name: '阀门状态',
+      description: '阀门当前开关状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'openness',
+      name: '开度',
+      description: '阀门当前开度百分比',
+      dataType: 'number',
+      unit: '%',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 100 }
+    },
+    {
+      id: 'flow_rate',
+      name: '流量',
+      description: '通过阀门的流量',
+      dataType: 'number',
+      unit: 'm³/h',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'pressure_diff',
+      name: '压差',
+      description: '阀门两端压差',
+      dataType: 'number',
+      unit: 'kPa',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'alarm',
+      name: '告警状态',
+      description: '是否处于告警状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
     }
   ]
 }
@@ -298,7 +407,8 @@ export const Tank3DComponent: ComponentConfig = {
       path: 'data.level',
       defaultValue: 50,
       min: 0,
-      max: 100
+      max: 100,
+      bindable: true
     },
     {
       key: 'capacity',
@@ -306,14 +416,16 @@ export const Tank3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.capacity',
       defaultValue: 100,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'temperature',
       label: '温度(°C)',
       type: 'number',
       path: 'data.temperature',
-      defaultValue: 25
+      defaultValue: 25,
+      bindable: true
     },
     {
       key: 'pressure',
@@ -321,14 +433,16 @@ export const Tank3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.pressure',
       defaultValue: 101,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'liquidColor',
       label: '液体颜色',
       type: 'color',
       path: 'data.liquidColor',
-      defaultValue: '#3b82f6'
+      defaultValue: '#3b82f6',
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -343,6 +457,55 @@ export const Tank3DComponent: ComponentConfig = {
       type: 'text',
       path: 'data.property',
       defaultValue: ''
+    }
+  ],
+  // 组件预定义的数据点位（后端应按此格式返回数据）
+  points: [
+    {
+      id: 'liquid_level',
+      name: '液位高度',
+      description: '储罐当前液位百分比',
+      dataType: 'number',
+      unit: '%',
+      defaultValue: 50,
+      required: true,
+      range: { min: 0, max: 100 }
+    },
+    {
+      id: 'temperature',
+      name: '温度',
+      description: '储罐内液体温度',
+      dataType: 'number',
+      unit: '℃',
+      defaultValue: 25,
+      required: false
+    },
+    {
+      id: 'pressure',
+      name: '压力',
+      description: '储罐内部压力',
+      dataType: 'number',
+      unit: 'kPa',
+      defaultValue: 101,
+      required: false,
+      range: { min: 0 }
+    },
+    {
+      id: 'capacity',
+      name: '实际容量',
+      description: '当前实际存储量',
+      dataType: 'number',
+      unit: 'm³',
+      defaultValue: 50,
+      required: false
+    },
+    {
+      id: 'alarm',
+      name: '告警状态',
+      description: '是否处于告警状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
     }
   ]
 }
@@ -422,7 +585,8 @@ export const Pump3DComponent: ComponentConfig = {
       options: [
         { label: '停止', value: false },
         { label: '运行', value: 'running' }
-      ]
+      ],
+      bindable: true
     },
     {
       key: 'speed',
@@ -430,7 +594,8 @@ export const Pump3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.speed',
       defaultValue: 2900,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'power',
@@ -438,7 +603,8 @@ export const Pump3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.power',
       defaultValue: 5.5,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'flowRate',
@@ -446,7 +612,8 @@ export const Pump3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.flowRate',
       defaultValue: 15,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'pressure',
@@ -454,7 +621,8 @@ export const Pump3DComponent: ComponentConfig = {
       type: 'number',
       path: 'data.pressure',
       defaultValue: 3.5,
-      min: 0
+      min: 0,
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -469,6 +637,82 @@ export const Pump3DComponent: ComponentConfig = {
       type: 'text',
       path: 'data.property',
       defaultValue: ''
+    }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'status',
+      name: '运行状态',
+      description: '泵当前运行状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'speed',
+      name: '转速',
+      description: '泵轴转速',
+      dataType: 'number',
+      unit: 'rpm',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 5000 }
+    },
+    {
+      id: 'flow_rate',
+      name: '流量',
+      description: '当前流量',
+      dataType: 'number',
+      unit: 'm³/h',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 200 }
+    },
+    {
+      id: 'pressure',
+      name: '出口压力',
+      description: '泵出口压力',
+      dataType: 'number',
+      unit: 'bar',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 20 }
+    },
+    {
+      id: 'power',
+      name: '功率',
+      description: '当前功率',
+      dataType: 'number',
+      unit: 'kW',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'temperature',
+      name: '温度',
+      description: '泵体温度',
+      dataType: 'number',
+      unit: '℃',
+      defaultValue: 25,
+      required: false
+    },
+    {
+      id: 'vibration',
+      name: '振动',
+      description: '振动值',
+      dataType: 'number',
+      unit: 'mm/s',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'alarm',
+      name: '告警状态',
+      description: '是否处于告警状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
     }
   ]
 }

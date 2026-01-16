@@ -74,7 +74,8 @@ export const SwitchComponent: ComponentConfig = {
         { label: '关闭', value: false },
         { label: '开启', value: true }
       ],
-      description: '开关当前状态'
+      description: '开关当前状态',
+      bindable: true
     },
     {
       key: 'deviceId',
@@ -91,6 +92,25 @@ export const SwitchComponent: ComponentConfig = {
       path: 'data.property',
       defaultValue: '',
       description: '绑定的设备属性名称'
+    }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'status',
+      name: '开关状态',
+      description: '开关当前状态（开/关）',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'enabled',
+      name: '启用状态',
+      description: '开关是否可用',
+      dataType: 'boolean',
+      defaultValue: true,
+      required: false
     }
   ]
 }

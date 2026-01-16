@@ -258,20 +258,6 @@ const calculateFitScale = () => {
 	
 	// 最大不超过1（100%），避免画布被放大
 	const finalScale = Math.min(autoScale, 1)
-	
-	// 调试日志
-	console.log('📏 [Calculate Scale]', {
-		canvasSize: { width: canvasWidth, height: canvasHeight },
-		canvasRatio: canvasRatio.toFixed(2),
-		areaSize: { width: areaWidth, height: areaHeight },
-		availableSize: { width: availableWidth, height: availableHeight },
-		availableRatio: availableRatio.toFixed(2),
-		autoScale: autoScale.toFixed(3),
-		finalScale: finalScale.toFixed(3),
-		scaleBy,
-		analysis: `画布${canvasRatio > availableRatio ? '更宽' : '更高'}，以${scaleBy === 'width' ? '宽度' : '高度'}为基准缩放`
-	})
-	
 	return finalScale
 }
 
@@ -309,17 +295,7 @@ const calculateContainerSize = (): { width: number; height: number; canvasWidth:
 	// 确保不超过逻辑尺寸
 	displayWidth = Math.min(displayWidth, canvasWidth)
 	displayHeight = Math.min(displayHeight, canvasHeight)
-	
-	console.log('🎨 [Container Size]', {
-		logicSize: { width: canvasWidth, height: canvasHeight },
-		availableSize: { width: availableWidth, height: availableHeight },
-		displaySize: { width: Math.round(displayWidth), height: Math.round(displayHeight) },
-		canvasRatio: canvasRatio.toFixed(2),
-		availableRatio: availableRatio.toFixed(2),
-		scaleBy: canvasRatio > availableRatio ? 'width' : 'height',
-		padding
-	})
-	
+
 	return { width: displayWidth, height: displayHeight, canvasWidth, canvasHeight }
 }
 
@@ -331,7 +307,8 @@ const updateContainerTransform = () => {
 	const sizeData = calculateContainerSize()
 	if (!sizeData) return
 	
-	const { width: displayWidth, height: displayHeight, canvasWidth, canvasHeight } = sizeData
+	const { width: displayWidth, height: displayHeight, canvasWidth } = sizeData
+	// 注意：canvasHeight 包含在 sizeData 中但此处不需要单独使用
 	
 	// 设置容器的实际尺寸（而不是固定 1920x1080）
 	container.style.width = `${displayWidth}px`
@@ -350,25 +327,6 @@ const updateContainerTransform = () => {
 		// 同步更新配置中的缩放值
 		canvasConfigManager.updateByPath('zoom.scale', Number(x6Scale.toFixed(2)))
 	}
-	
-	// 调试日志
-	console.log('📐 [Canvas Scale]', {
-		logicSize: { width: canvasWidth, height: canvasHeight },
-		displaySize: { width: displayWidth, height: displayHeight },
-		x6Scale: graph ? (displayWidth / canvasWidth).toFixed(3) : 'not created',
-		containerStyle: {
-			width: container.style.width,
-			height: container.style.height
-		},
-		containerActual: {
-			clientWidth: container.clientWidth,
-			clientHeight: container.clientHeight,
-			offsetWidth: container.offsetWidth,
-			offsetHeight: container.offsetHeight
-		},
-		graphScale: graph ? graph.scale() : 'not created yet',
-		graphSize: graph ? { width: graph.options.width, height: graph.options.height } : 'not created'
-	})
 }
 
 onMounted(() => {
@@ -632,9 +590,8 @@ onMounted(() => {
 	nodeOperations.setGraph(graph)
 	edgeOperations.setGraph(graph)
 	canvasDataHandler.setGraph(graph)
+	// 初始化数据绑定监听（setGraph 会自动调用 initDataBinding）
 	dataBindingService.setGraph(graph)
-	// 初始化数据绑定监听
-	dataBindingService.initDataBinding()
 
 	// ========== 初始化配置监听器 ==========
 	canvasConfigWatcher.initialize(graph, canvasAreaRef, calculateFitScale, () => {
@@ -695,22 +652,21 @@ onMounted(() => {
 							id: dsConfig.id,
 							name: dsConfig.name,
 							type: dsConfig.type,
-							enabled: dsConfig.enabled,
+							enabled: dsConfig.enabled !== false, // 默认启用，除非明确设置为 false
 							config: dsConfig.config,
 							devices: [],
-							status: { connected: false }
+							status: { connected: false } // 初始为 false，连接成功后会自动更新
 						}
+						// addDataSource 会自动触发连接（如果 enabled=true）
 						dataSourceManager.addDataSource(newDataSource)
 					})
 					
-					// 延迟更新，等待连接建立
-					setTimeout(() => {
-						dataSources.value = dataSourceManager.getAllDataSources()
-					}, 1500)
+					// 立即更新一次，显示初始状态
+					dataSources.value = dataSourceManager.getAllDataSources()
 				}
 			}
 		} catch (error) {
-			console.error('恢复数据源失败:', error)
+			console.error('[恢复数据源失败:', error)
 		}
 	}
 
@@ -945,21 +901,15 @@ const handleSave = async () => {
 	}
 	
 	try {
-		console.log('[ScadaCanvas] handleSave 被调用')
-		console.log('[ScadaCanvas] props.onSave:', props.onSave)
-		
 		// 如果有自定义保存回调，优先使用
 		if (props.onSave) {
-			console.log('[ScadaCanvas] 调用自定义 onSave 回调')
 			const result = props.onSave()
 			if (result instanceof Promise) {
 				await result
 			}
-			console.log('[ScadaCanvas] 自定义 onSave 回调执行完成')
 			return
 		}
 		
-		console.log('[ScadaCanvas] 没有自定义回调，执行默认下载')
 		// 默认下载 JSON 文件（使用 canvasDataHandler）
 		const filename = canvasDataHandler.exportToFile(`scada-canvas-${new Date().getTime()}.json`)
 		if (filename) {
@@ -1070,7 +1020,6 @@ const saveDataSourcesToLocalStorage = () => {
 			config: ds.config
 		}))
 		localStorage.setItem('scada-data-sources', JSON.stringify(dataSourcesConfig))
-		console.log('[ScadaCanvas] 数据源配置已保存到 localStorage')
 	} catch (error) {
 		console.error('保存数据源失败:', error)
 	}
@@ -1084,13 +1033,11 @@ const handleAddDataSource = (config: Omit<DataSource, 'id' | 'devices' | 'status
 		status: { connected: false }
 	}
 	
-	console.log('[ScadaCanvas] 添加数据源:', newDataSource)
 	dataSourceManager.addDataSource(newDataSource)
 	
 	// 延迟一下刷新，等待连接建立
 	setTimeout(() => {
 		dataSources.value = dataSourceManager.getAllDataSources()
-		console.log('[ScadaCanvas] 数据源列表已更新:', dataSources.value)
 		// 保存到 localStorage
 		saveDataSourcesToLocalStorage()
 	}, 1000)

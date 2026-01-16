@@ -121,5 +121,32 @@ export const EChartsLineComponent: ComponentConfig = {
       defaultValue: 'Data',
       description: '显示在 tooltip 和 legend 中的系列名称'
     }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'series_data',
+      name: '系列数据',
+      description: '折线图Y轴数据数组',
+      dataType: 'json',
+      defaultValue: [120, 200, 150, 80, 70, 110, 130],
+      required: true
+    },
+    {
+      id: 'x_axis_data',
+      name: 'X轴数据',
+      description: '折线图X轴标签数组',
+      dataType: 'json',
+      defaultValue: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      required: false
+    },
+    {
+      id: 'title',
+      name: '图表标题',
+      description: '折线图显示标题',
+      dataType: 'string',
+      defaultValue: '数据趋势',
+      required: false
+    }
   ]
 }

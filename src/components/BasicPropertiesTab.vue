@@ -64,7 +64,7 @@
 				<div class="color-input-wrapper">
 					<input 
 						type="color" 
-						:value="nodeAttrs?.body?.fill || '#3b82f6'" 
+						:value="normalizeColorValue(nodeAttrs?.body?.fill) || '#3b82f6'" 
 						@input="$emit('update-fill', $event)" 
 					/>
 					<span class="color-value">{{ nodeAttrs?.body?.fill || '#3b82f6' }}</span>
@@ -75,7 +75,7 @@
 				<div class="color-input-wrapper">
 					<input 
 						type="color" 
-						:value="nodeAttrs?.body?.stroke || '#2563eb'" 
+						:value="normalizeColorValue(nodeAttrs?.body?.stroke) || '#2563eb'" 
 						@input="$emit('update-stroke', $event)" 
 					/>
 					<span class="color-value">{{ nodeAttrs?.body?.stroke || '#2563eb' }}</span>
@@ -137,7 +137,7 @@
 				<div v-else-if="prop.type === 'color'" class="color-input-wrapper">
 					<input
 						type="color"
-						:value="getPropValue(prop)"
+						:value="normalizeColorValue(getPropValue(prop))"
 						@input="updateDynamicProp(prop, $event)"
 					/>
 					<span class="color-value">{{ getPropValue(prop) }}</span>
@@ -230,6 +230,18 @@ const getPropValue = (prop: any) => {
 	}
 	
 	return value !== undefined ? value : prop.defaultValue
+}
+
+// 标准化颜色值（将 transparent 转换为有效的十六进制颜色）
+const normalizeColorValue = (colorValue: any): string => {
+	if (!colorValue || colorValue === 'transparent') {
+		return '#000000' // input[type=color] 不支持 transparent，使用黑色作为占位
+	}
+	// 确保返回十六进制格式
+	if (typeof colorValue === 'string' && colorValue.startsWith('#')) {
+		return colorValue
+	}
+	return '#000000' // 其他无效格式也返回黑色
 }
 
 // 更新动态属性

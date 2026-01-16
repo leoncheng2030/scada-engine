@@ -5,6 +5,10 @@
 
 import { ref, reactive } from 'vue'
 import { createMqttService, type MqttConfig } from './mqttService'
+import { createWebSocketService, type WebSocketConfig } from './websocketService'
+import { createHttpService, type HttpConfig } from './httpService'
+import { createSseService, type SseConfig } from './sseService'
+import { DataParser } from './dataParser'
 
 // 数据源类型定义
 export interface DataSource {
@@ -32,6 +36,8 @@ export interface DataSource {
     // 通用
     dataPath?: string
     retryCount?: number
+    // 自定义解析器（可选）
+    customParser?: (data: any) => any
   }
   status?: {
     connected: boolean
@@ -136,6 +142,8 @@ export class DataSourceManager {
       // 先断开已有连接
       this.disconnectDataSource(id)
 
+      console.log(`[DataSourceManager] 开始连接数据源: ${dataSource.name} (${dataSource.type})`)
+
       // 根据类型创建连接
       switch (dataSource.type) {
         case 'MQTT':
@@ -152,11 +160,8 @@ export class DataSourceManager {
           break
       }
 
-      // 更新状态
-      if (dataSource.status) {
-        dataSource.status.connected = true
-        dataSource.status.error = undefined
-      }
+      // 注意：不再在这里直接设置 connected=true
+      // 状态会通过 onStatusChange 回调自动更新
     } catch (error) {
       console.error(`[DataSource] 连接失败: ${dataSource.name}`, error)
       if (dataSource.status) {
@@ -181,13 +186,11 @@ export class DataSourceManager {
       if (dataSource.type === 'MQTT') {
         connection.disconnect()
       } else if (dataSource.type === 'WebSocket') {
-        connection.close()
+        connection.disconnect()
       } else if (dataSource.type === 'HTTP') {
-        if (connection.intervalId) {
-          clearInterval(connection.intervalId)
-        }
+        connection.stop()
       } else if (dataSource.type === 'SSE') {
-        connection.close()
+        connection.disconnect()
       }
     } catch (error) {
       console.error(`[DataSource] 断开连接失败:`, error)
@@ -231,6 +234,17 @@ export class DataSourceManager {
       console.error(`[MQTT] 数据源 ${dataSource.name} 错误:`, error)
       if (dataSource.status) {
         dataSource.status.error = error.message
+        dataSource.status.connected = false
+      }
+    })
+
+    // 设置状态变化回调
+    mqttService.onStatusChange((connected) => {
+      if (dataSource.status) {
+        dataSource.status.connected = connected
+        if (connected) {
+          dataSource.status.error = undefined
+        }
       }
     })
 
@@ -254,66 +268,263 @@ export class DataSourceManager {
    * 连接 WebSocket
    */
   private async connectWebSocket(id: string, dataSource: DataSource): Promise<void> {
-    // TODO: 实现 WebSocket 连接
-    console.log('[WebSocket] 连接功能待实现')
+    const wsService = createWebSocketService()
+
+    // 设置数据接收回调
+    wsService.onData((deviceData) => {
+      this.handleDeviceData(id, deviceData)
+    })
+
+    // 设置错误回调
+    wsService.onError((error) => {
+      console.error(`[WebSocket] 数据源 ${dataSource.name} 错误:`, error)
+      if (dataSource.status) {
+        dataSource.status.error = error.message
+      }
+    })
+
+    // 设置状态变化回调
+    wsService.onStatusChange((connected) => {
+      if (dataSource.status) {
+        dataSource.status.connected = connected
+      }
+    })
+
+    // 连接
+    const config: WebSocketConfig = {
+      url: dataSource.config.wsUrl || '',
+      dataPath: dataSource.config.dataPath,
+      enabled: true,
+      autoReconnect: true,
+      reconnectDelay: 5000
+    }
+
+    await wsService.connect(config)
+    this.connections.set(id, wsService)
   }
 
   /**
    * 连接 HTTP
    */
   private async connectHttp(id: string, dataSource: DataSource): Promise<void> {
-    // TODO: 实现 HTTP 轮询
-    console.log('[HTTP] 轮询功能待实现')
+    const httpService = createHttpService()
+
+    // 设置数据接收回调
+    httpService.onData((deviceData) => {
+      this.handleDeviceData(id, deviceData)
+    })
+
+    // 设置错误回调
+    httpService.onError((error) => {
+      console.error(`[HTTP] 数据源 ${dataSource.name} 错误:`, error)
+      if (dataSource.status) {
+        dataSource.status.error = error.message
+        dataSource.status.connected = false
+      }
+    })
+
+    // 设置状态变化回调
+    httpService.onStatusChange((connected) => {
+      if (dataSource.status) {
+        dataSource.status.connected = connected
+      }
+    })
+
+    // 启动轮询
+    const config: HttpConfig = {
+      url: dataSource.config.url || '',
+      method: dataSource.config.method as any || 'GET',
+      pollInterval: dataSource.config.pollInterval || 5000,
+      headers: dataSource.config.headers,
+      dataPath: dataSource.config.dataPath,
+      enabled: true
+    }
+
+    await httpService.start(config)
+    this.connections.set(id, httpService)
   }
 
   /**
    * 连接 SSE
    */
   private async connectSSE(id: string, dataSource: DataSource): Promise<void> {
-    // TODO: 实现 SSE 连接
-    console.log('[SSE] 连接功能待实现')
+    const sseService = createSseService()
+
+    // 设置数据接收回调
+    sseService.onData((deviceData) => {
+      this.handleDeviceData(id, deviceData)
+    })
+
+    // 设置错误回调
+    sseService.onError((error) => {
+      console.error(`[SSE] 数据源 ${dataSource.name} 错误:`, error)
+      if (dataSource.status) {
+        dataSource.status.error = error.message
+      }
+    })
+
+    // 设置状态变化回调
+    sseService.onStatusChange((connected) => {
+      if (dataSource.status) {
+        dataSource.status.connected = connected
+      }
+    })
+
+    // 连接
+    const config: SseConfig = {
+      url: dataSource.config.sseUrl || '',
+      eventType: dataSource.config.eventType || 'message',
+      dataPath: dataSource.config.dataPath,
+      enabled: true,
+      autoReconnect: true,
+      reconnectDelay: 5000
+    }
+
+    await sseService.connect(config)
+    this.connections.set(id, sseService)
   }
 
   /**
-   * 处理接收到的设备数据
+   * 处理接收到的原始数据
+   * 解析并更新设备列表，然后传递给回调
    */
-  private handleDeviceData(dataSourceId: string, deviceData: any): void {
+  private handleDeviceData(dataSourceId: string, rawData: any): void {
     const dataSource = this.dataSources.get(dataSourceId)
     if (!dataSource) return
-
-    // 更新设备数据
-    const existingIndex = dataSource.devices.findIndex((d) => d.id === deviceData.id)
-    
-    if (existingIndex >= 0) {
-      // 更新现有设备
-      const device = dataSource.devices[existingIndex]
-      deviceData.points.forEach((newPoint: any) => {
-        const pointIndex = device.points.findIndex((p) => p.id === newPoint.id)
-        if (pointIndex >= 0) {
-          device.points[pointIndex] = { ...device.points[pointIndex], ...newPoint }
-        } else {
-          device.points.push(newPoint)
-        }
-      })
-      device.name = deviceData.name || device.name
-    } else {
-      // 添加新设备
-      dataSource.devices.push({
-        id: deviceData.id,
-        name: deviceData.name || deviceData.id,
-        points: deviceData.points
-      })
-    }
 
     // 更新最后更新时间
     if (dataSource.status) {
       dataSource.status.lastUpdate = new Date().toISOString()
     }
 
-    // 触发回调
+    // 解析设备数据，更新到 dataSource.devices
+    this.parseAndUpdateDevices(dataSource, rawData)
+
+    // 直接触发回调，传递原始数据
     this.onDataCallbacks.forEach((callback) => {
-      callback(dataSourceId, deviceData)
+      callback(dataSourceId, rawData)
     })
+  }
+
+  /**
+   * 解析并更新设备列表
+   */
+  private parseAndUpdateDevices(dataSource: DataSource, rawData: any): void {
+    try {
+      // 如果有自定义解析器，使用它
+      let parsedData = rawData
+      if (dataSource.config.customParser) {
+        parsedData = dataSource.config.customParser(rawData)
+      }
+
+      // 优先判断：多设备格式 { devices: [...] }
+      if (parsedData && Array.isArray(parsedData.devices)) {
+        const parsedDevices: any[] = []
+        
+        for (const device of parsedData.devices) {
+          const deviceData = DataParser.parseDeviceData(
+            device,
+            device.id || device.deviceId || `device-${parsedDevices.length}`,
+            device.name || device.deviceName
+          )
+          
+          if (deviceData) {
+            parsedDevices.push({
+              id: deviceData.id,
+              name: deviceData.name,
+              points: deviceData.points.map((point: any) => ({
+                id: point.id,
+                name: point.name || point.id,
+                code: point.code || point.id,
+                value: point.value,
+                unit: point.unit || '',
+                dataType: point.dataType || 'number',
+                accessMode: 'read',
+                quality: point.quality,
+                timestamp: point.timestamp
+              }))
+            })
+          }
+        }
+        
+        if (parsedDevices.length > 0) {
+          dataSource.devices = parsedDevices
+          return
+        }
+      }
+
+      // 设备数组格式: [{ id, name, points }, ...]
+      if (Array.isArray(parsedData) && parsedData.length > 0) {
+        const parsedDevices: any[] = []
+        
+        for (const device of parsedData) {
+          const deviceData = DataParser.parseDeviceData(
+            device,
+            device.id || device.deviceId || `device-${parsedDevices.length}`,
+            device.name || device.deviceName
+          )
+          
+          if (deviceData) {
+            parsedDevices.push({
+              id: deviceData.id,
+              name: deviceData.name,
+              points: deviceData.points.map((point: any) => ({
+                id: point.id,
+                name: point.name || point.id,
+                code: point.code || point.id,
+                value: point.value,
+                unit: point.unit || '',
+                dataType: point.dataType || 'number',
+                accessMode: 'read',
+                quality: point.quality,
+                timestamp: point.timestamp
+              }))
+            })
+          }
+        }
+        
+        if (parsedDevices.length > 0) {
+          dataSource.devices = parsedDevices
+          return
+        }
+      }
+      
+      // 最后尝试：单设备数据（使用 DataParser）
+      const deviceData = DataParser.parseDeviceData(
+        parsedData,
+        'default-device', // 默认设备ID
+        dataSource.name    // 使用数据源名称作为设备名称
+      )
+
+      if (deviceData) {
+        // 单设备格式
+        dataSource.devices = [{
+          id: deviceData.id,
+          name: deviceData.name,
+          points: deviceData.points.map((point: any) => ({
+            id: point.id,
+            name: point.name || point.id,
+            code: point.code || point.id,
+            value: point.value,
+            unit: point.unit || '',
+            dataType: point.dataType || 'number',
+            accessMode: 'read',
+            quality: point.quality,
+            timestamp: point.timestamp
+          }))
+        }]
+        
+        return
+      }
+      
+      console.warn(`[DataSourceManager] 数据源 "${dataSource.name}" 接收到不支持的数据格式:`, parsedData)
+      console.warn('[DataSourceManager] 支持的格式:')
+      console.warn('  1. 简化点位数组: [{ id, value }, ...]')
+      console.warn('  2. 单设备格式: { id, name, points: [...] }')
+      console.warn('  3. 多设备格式: { devices: [{ id, name, points: [...] }] }')
+    } catch (error) {
+      console.error(`[DataSourceManager] 解析数据源 "${dataSource.name}" 的数据失败:`, error)
+    }
   }
 
   /**

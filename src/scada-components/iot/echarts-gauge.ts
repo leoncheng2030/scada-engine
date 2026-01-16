@@ -110,7 +110,8 @@ export const EChartsGaugeComponent: ComponentConfig = {
       type: 'number',
       path: 'data.value',
       defaultValue: 50,
-      description: '仪表盘当前显示值'
+      description: '仪表盘当前显示值',
+      bindable: true
     },
     {
       key: 'title',
@@ -127,6 +128,42 @@ export const EChartsGaugeComponent: ComponentConfig = {
       path: 'data.name',
       defaultValue: 'Pressure',
       description: '显示在 tooltip 中的系列名称'
+    }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'value',
+      name: '当前值',
+      description: '仪表盘当前显示的数值',
+      dataType: 'number',
+      defaultValue: 50,
+      required: true,
+      range: { min: 0, max: 100 }
+    },
+    {
+      id: 'min',
+      name: '最小值',
+      description: '仪表盘刻度最小值',
+      dataType: 'number',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'max',
+      name: '最大值',
+      description: '仪表盘刻度最大值',
+      dataType: 'number',
+      defaultValue: 100,
+      required: false
+    },
+    {
+      id: 'title',
+      name: '标题',
+      description: '仪表盘显示标题',
+      dataType: 'string',
+      defaultValue: 'SCORE',
+      required: false
     }
   ]
 }
