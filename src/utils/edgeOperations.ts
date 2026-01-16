@@ -1,0 +1,218 @@
+/**
+ * 边操作工具类
+ * 负责边的动画、更新、删除等操作
+ */
+
+import type { Graph, Edge } from '@antv/x6'
+
+/**
+ * 边动画配置
+ */
+export interface EdgeAnimationConfig {
+  enabled: boolean
+  duration?: number
+}
+
+/**
+ * 边操作工具类
+ */
+export class EdgeOperations {
+  private graph: Graph | null = null
+
+  /**
+   * 设置 Graph 实例
+   */
+  setGraph(graph: Graph | null) {
+    this.graph = graph
+  }
+
+  /**
+   * 应用边动画
+   */
+  applyEdgeAnimation(edge: Edge, animation: EdgeAnimationConfig): void {
+    // 安全检查：确保 edge 存在且是有效对象
+    if (!edge || typeof edge.attr !== 'function') {
+      console.warn('applyEdgeAnimation: edge 对象无效', edge)
+      return
+    }
+    
+    if (!animation || !animation.enabled) {
+      // 关闭动画
+      edge.attr('line/strokeDasharray', undefined)
+      // 移除光点
+      edge.attr('circle', undefined)
+      if (typeof edge.stopTransition === 'function') {
+        edge.stopTransition('attrs/circle/atConnectionRatio')
+      }
+      return
+    }
+    
+    // 使用光点流动动画
+    const duration = animation.duration || 2000 // 默认2秒
+    
+    // 设置光点样式
+    edge.attr('circle', {
+      r: 4,
+      atConnectionRatio: 0,
+      fill: {
+        type: 'radialGradient',
+        stops: [
+          { offset: '0%', color: '#FFF' },
+          { offset: '100%', color: edge.attr('line/stroke') || '#10b981' }
+        ]
+      },
+      stroke: edge.attr('line/stroke') || '#10b981',
+      strokeWidth: 1
+    })
+    
+    // 开始动画
+    const startAnimation = () => {
+      edge.attr('circle/atConnectionRatio', 0, { silent: true })
+      edge.transition('attrs/circle/atConnectionRatio', 1, {
+        delay: 0,
+        duration: duration,
+        timing: 'linear',
+        complete: () => {
+          // 循环动画
+          startAnimation()
+        }
+      })
+    }
+    startAnimation()
+  }
+
+  /**
+   * 更新边属性
+   */
+  updateEdge(edge: Edge, updates: any): void {
+    if (!edge) return
+    
+    // 更新属性
+    if (updates.attrs) {
+      Object.keys(updates.attrs).forEach(key => {
+        const attrValue = updates.attrs[key]
+        if (typeof attrValue === 'object') {
+          Object.keys(attrValue).forEach(subKey => {
+            edge.attr(`${key}/${subKey}`, attrValue[subKey])
+            // 更新保存的原始样式
+            if (edge.data?.originalAttrs?.[key]) {
+              edge.data.originalAttrs[key][subKey] = attrValue[subKey]
+            }
+          })
+        } else {
+          edge.attr(key, attrValue)
+        }
+      })
+      
+      // 重新应用选中高亮效果（只改变颜色）
+      const currentAttrs = edge.getAttrs()
+      const newData = Object.assign({}, edge.data, { originalAttrs: currentAttrs })
+      edge.setData(newData)
+      edge.attr('line/stroke', '#3b82f6')
+    }
+    
+    // 更新路由
+    if (updates.router) {
+      edge.setRouter(updates.router)
+    }
+    
+    // 更新连接器
+    if (updates.connector) {
+      edge.setConnector(updates.connector)
+    }
+    
+    // 更新动画配置
+    if (updates.animation) {
+      this.applyEdgeAnimation(edge, updates.animation)
+    }
+    
+    // 更新data
+    if (updates.data) {
+      edge.setData(Object.assign({}, edge.data, updates.data))
+    }
+  }
+
+  /**
+   * 删除边
+   */
+  deleteEdge(edgeId: string): boolean {
+    if (!this.graph) return false
+    
+    try {
+      this.graph.removeEdge(edgeId)
+      return true
+    } catch (error) {
+      console.error('删除边失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 获取边
+   */
+  getEdgeById(edgeId: string): Edge | null {
+    if (!this.graph) return null
+    const cell = this.graph.getCellById(edgeId)
+    if (!cell || !cell.isEdge()) return null
+    return cell as Edge
+  }
+
+  /**
+   * 获取所有边
+   */
+  getAllEdges(): Array<{
+    id: string
+    source: string
+    target: string
+    data: any
+  }> {
+    if (!this.graph) return []
+    return this.graph.getEdges().map(edge => ({
+      id: edge.id,
+      source: edge.getSourceCellId(),
+      target: edge.getTargetCellId(),
+      data: edge.getData()
+    }))
+  }
+
+  /**
+   * 应用选中样式
+   */
+  applySelectedStyle(edge: Edge): void {
+    if (!edge) return
+    
+    // 保存原始样式
+    const originalAttrs = edge.getAttrs()
+    edge.data = { ...edge.data, originalAttrs }
+    
+    // 应用选中样式：只改变颜色，不改变粗细
+    edge.attr('line/stroke', '#3b82f6') // 蓝色高亮
+  }
+
+  /**
+   * 恢复原始样式
+   */
+  restoreOriginalStyle(edge: Edge): void {
+    if (!edge || !edge.data?.originalAttrs) return
+    
+    const originalAttrs = edge.data.originalAttrs
+    edge.attr('line/stroke', originalAttrs.line?.stroke || '#10b981')
+  }
+
+  /**
+   * 恢复所有边的动画（用于加载画布数据后）
+   */
+  restoreAllEdgeAnimations(): void {
+    if (!this.graph) return
+    
+    this.graph.getEdges().forEach((edge: Edge) => {
+      const edgeData = edge.getData()
+      if (edgeData?.animation?.enabled) {
+        this.applyEdgeAnimation(edge, edgeData.animation)
+      }
+    })
+  }
+}
+
+// 导出单例
+export const edgeOperations = new EdgeOperations()

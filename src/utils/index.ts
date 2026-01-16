@@ -20,3 +20,27 @@ export * from './commonUtils'
 
 // 消息提示工具
 export * from './messageUtils'
+
+// X6 画布操作工具
+export * from './graphOperations'
+
+// 节点操作工具
+export * from './nodeOperations'
+
+// 边操作工具
+export * from './edgeOperations'
+
+// 画布数据处理工具
+export * from './canvasDataHandler'
+
+// 数据绑定服务
+export * from './dataBindingService'
+
+// 事件管理器
+export * from './eventManager'
+
+// 右键菜单管理器
+export * from './contextMenuManager'
+
+// 画布配置监听器
+export * from './canvasConfigWatcher'
