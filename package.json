@@ -1,6 +1,6 @@
 {
   "name": "@nywqs/scada-engine",
-  "version": "1.1.30",
+  "version": "1.1.31",
   "description": "自研 SCADA 组态引擎 - 基于 AntV X6",
   "type": "module",
   "main": "./dist/scada-engine.umd.js",
