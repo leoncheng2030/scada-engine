@@ -3,6 +3,7 @@ import Motor3D from './Motor3D.vue'
 import Valve3D from './Valve3D.vue'
 import Tank3D from './Tank3D.vue'
 import Pump3D from './Pump3D.vue'
+import PumpGLB from './PumpGLB.vue'
 
 /**
  * 3D电机组件配置
@@ -535,6 +536,7 @@ export const Pump3DComponent: ComponentConfig = {
   },
   data: {
     type: 'pump',
+    modelUrl: '',
     state: false,
     speed: 2900,
     power: 5.5,
@@ -576,6 +578,223 @@ export const Pump3DComponent: ComponentConfig = {
     ]
   },
   props: [
+    {
+      key: 'state',
+      label: '运行状态',
+      type: 'select',
+      path: 'data.state',
+      defaultValue: false,
+      options: [
+        { label: '停止', value: false },
+        { label: '运行', value: 'running' }
+      ],
+      bindable: true
+    },
+    {
+      key: 'speed',
+      label: '转速(rpm)',
+      type: 'number',
+      path: 'data.speed',
+      defaultValue: 2900,
+      min: 0,
+      bindable: true
+    },
+    {
+      key: 'power',
+      label: '功率(kW)',
+      type: 'number',
+      path: 'data.power',
+      defaultValue: 5.5,
+      min: 0,
+      bindable: true
+    },
+    {
+      key: 'flowRate',
+      label: '流量(m³/h)',
+      type: 'number',
+      path: 'data.flowRate',
+      defaultValue: 15,
+      min: 0,
+      bindable: true
+    },
+    {
+      key: 'pressure',
+      label: '压力(bar)',
+      type: 'number',
+      path: 'data.pressure',
+      defaultValue: 3.5,
+      min: 0,
+      bindable: true
+    },
+    {
+      key: 'deviceId',
+      label: '设备ID',
+      type: 'text',
+      path: 'data.deviceId',
+      defaultValue: ''
+    },
+    {
+      key: 'property',
+      label: '设备属性',
+      type: 'text',
+      path: 'data.property',
+      defaultValue: ''
+    }
+  ],
+  // 组件预定义的数据点位
+  points: [
+    {
+      id: 'status',
+      name: '运行状态',
+      description: '泵当前运行状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: true
+    },
+    {
+      id: 'speed',
+      name: '转速',
+      description: '泵轴转速',
+      dataType: 'number',
+      unit: 'rpm',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 5000 }
+    },
+    {
+      id: 'flow_rate',
+      name: '流量',
+      description: '当前流量',
+      dataType: 'number',
+      unit: 'm³/h',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 200 }
+    },
+    {
+      id: 'pressure',
+      name: '出口压力',
+      description: '泵出口压力',
+      dataType: 'number',
+      unit: 'bar',
+      defaultValue: 0,
+      required: true,
+      range: { min: 0, max: 20 }
+    },
+    {
+      id: 'power',
+      name: '功率',
+      description: '当前功率',
+      dataType: 'number',
+      unit: 'kW',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'temperature',
+      name: '温度',
+      description: '泵体温度',
+      dataType: 'number',
+      unit: '℃',
+      defaultValue: 25,
+      required: false
+    },
+    {
+      id: 'vibration',
+      name: '振动',
+      description: '振动值',
+      dataType: 'number',
+      unit: 'mm/s',
+      defaultValue: 0,
+      required: false
+    },
+    {
+      id: 'alarm',
+      name: '告警状态',
+      description: '是否处于告警状态',
+      dataType: 'boolean',
+      defaultValue: false,
+      required: false
+    }
+  ]
+}
+
+/**
+ * 3D喷雾泵(GLB)组件配置
+ */
+export const PumpGLBComponent: ComponentConfig = {
+  metadata: {
+    id: 'pump-glb',
+    name: '3D喷雾泵(GLB)',
+    category: 'iot',
+    icon: '🌀',
+    description: '基于 GLB 模型的 3D喷雾泵组件，支持运行状态与转速数据驱动动画',
+    version: '1.0.0'
+  },
+  shape: 'pump-glb-vue',
+  component: PumpGLB,
+  width: 200,
+  height: 200,
+  label: '',
+  attrs: {
+    body: {
+      fill: 'transparent',
+      stroke: 'transparent'
+    }
+  },
+  data: {
+    type: 'pump',
+    modelUrl: '',
+    state: false,
+    speed: 2900,
+    power: 5.5,
+    flowRate: 15,
+    pressure: 3.5,
+    deviceId: '',
+    property: ''
+  },
+  ports: {
+    groups: {
+      left: {
+        position: 'left',
+        attrs: {
+          circle: {
+            r: 4,
+            magnet: true,
+            stroke: '#31d0c6',
+            strokeWidth: 2,
+            fill: '#fff'
+          }
+        }
+      },
+      right: {
+        position: 'right',
+        attrs: {
+          circle: {
+            r: 4,
+            magnet: true,
+            stroke: '#31d0c6',
+            strokeWidth: 2,
+            fill: '#fff'
+          }
+        }
+      }
+    },
+    items: [
+      { id: 'port-left', group: 'left' },
+      { id: 'port-right', group: 'right' }
+    ]
+  },
+  props: [
+    {
+    key: 'modelUrl',
+    label: '模型URL',
+    type: 'text',
+    path: 'data.modelUrl',
+    defaultValue: '',
+    description: 'GLB模型地址(支持http/https或相对路径)',
+    bindable: false
+  },
     {
       key: 'state',
       label: '运行状态',

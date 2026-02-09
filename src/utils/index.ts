@@ -56,3 +56,6 @@ export * from './workerManager'
 
 // Canvas 分层管理器
 export * from './canvasLayerManager'
+
+// Draco 解码器单例
+export * from './dracoLoader'

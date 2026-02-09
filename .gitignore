@@ -38,3 +38,5 @@ coverage/
 .env.*.local
 docs/
 images/
+src/glb/**
+/src/glb/
