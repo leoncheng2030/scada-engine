@@ -79,6 +79,10 @@ export class NodeOperations {
       }
     }
 
+    if (config.shape == "image") {
+      nodeConfig.imageUrl = config.metadata.icon;
+    }
+
     const node = this.graph.addNode(nodeConfig)
     console.log('[Node] 添加节点:', config.shape, node.id, nodeConfig)
     

@@ -47,6 +47,29 @@
 					</div>
 				</div>
 			</div>
+
+      <!-- 自定义组件 -->
+      <div class="component-section" v-for="[name, customComponentList] in  Array.from(customComponents.entries())">
+        <div class="section-header" @click="toggleSection('custom')">
+          <h4 class="section-title">{{name}}</h4>
+          <span class="toggle-icon" :class="{ collapsed: collapsedSections.custom }">▼</span>
+        </div>
+        <div class="component-grid" v-show="!collapsedSections.custom">
+          <div
+              v-for="component in customComponentList"
+              :key="component.metadata.id"
+              class="component-item"
+              @click="handleAddComponent(component)"
+              :title="component.metadata.description || component.metadata.name"
+          >
+            <span v-if="component.metadata.iconType == '' || component.metadata.iconType == 'icon'" class="component-icon">{{ component.metadata.icon }}</span>
+            <span v-if="component.metadata.iconType == 'img'" >
+              <img  class="component-img" :src="component.metadata.icon"/>
+            </span>
+            <span class="component-name">{{ component.metadata.name }}</span>
+          </div>
+        </div>
+      </div>
 		</div>
 	</aside>
 </template>
@@ -76,11 +99,12 @@ const toggleCollapse = () => {
 // 折叠状态
 const collapsedSections = reactive({
 	basic: false,
-	iot: false
+	iot: false,
+  custom: false
 })
 
 // 切换分组折叠状态
-const toggleSection = (section: 'basic' | 'iot') => {
+const toggleSection = (section: 'basic' | 'iot' | 'custom') => {
 	collapsedSections[section] = !collapsedSections[section]
 }
 
@@ -96,6 +120,11 @@ const basicComponents = computed(() => {
 const iotComponents = computed(() => {
 	refreshKey.value // 依赖刷新标记
 	return componentRegistry.getComponentsByCategory('iot')
+})
+
+const customComponents = computed(() => {
+  refreshKey.value // 依赖刷新标记
+  return  componentRegistry.getComponentsByCustomCategory();
 })
 
 const handleAddComponent = (component: ComponentConfig) => {
@@ -269,6 +298,11 @@ onMounted(async () => {
 .component-icon {
 	font-size: 20px;
 	color: #e2e8f0;
+}
+
+.component-img {
+  width: 100%;
+  height: 30px;
 }
 
 .component-name {
