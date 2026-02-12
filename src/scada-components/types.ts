@@ -38,7 +38,9 @@ export interface ComponentMetadata {
   id: string                     // 组件唯一标识
   name: string                   // 组件名称
   category: ComponentCategory    // 组件分类
+  custom_category_name?: string | ""   // 自定义组件分类名称
   icon: string                   // 组件图标
+  iconType?: string  // 组件图标类型
   description?: string           // 组件描述
   version?: string               // 组件版本
   author?: string                // 组件作者

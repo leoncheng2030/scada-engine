@@ -122,7 +122,7 @@ import WorkflowDialog from '../views/workflow/WorkflowDialog.vue'
 import DataSourceDialog from './DataSourceDialog.vue'
 import ContextMenu from './ContextMenu.vue'
 import type { MenuItem } from './ContextMenu.vue'
-import { componentRegistry, canvasConfigManager } from '../scada-components'
+import {componentRegistry, canvasConfigManager, type ComponentConfig} from '../scada-components'
 import {
 	saveToLocal,
 	loadFromLocal,
@@ -141,6 +141,7 @@ import {
 } from '../utils'
 import { animationEngine } from '../utils/animationEngine'
 import { dataSourceManager, type DataSource } from '../services/dataSourceManager'
+import {COMMON_ANIMATION_PROPS} from "@/scada-components/types.ts";
 
 // 明确组件选项
 defineOptions({
@@ -1256,8 +1257,13 @@ defineExpose({
 	setBackgroundColor: (color: string) => {
 		canvasConfigManager.updateBackground({ color })
 	},
-	
-	// === 数据集成 ===
+  /** 设置背景颜色 */
+  registryComponent: (config: ComponentConfig) => {
+    componentRegistry.register(config)
+  },
+
+
+  // === 数据集成 ===
 	/** 更新设备数据 */
 	updateDeviceData: (deviceData: any) => {
 		// 更新节点上的设备数据

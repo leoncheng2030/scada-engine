@@ -321,6 +321,31 @@ class ComponentRegistryManager {
   }
 
   /**
+   * 按分类获取组件
+   */
+  getComponentsByCustomCategory(): Map<string|undefined, ComponentConfig[]> {
+    let componentCategoryMap: Map<string, ComponentConfig[]> = new Map();
+
+    for(let i in this.registry) {
+      let custom_category_name = this.registry[i].metadata.custom_category_name;
+      if (custom_category_name == undefined) {
+        continue
+      }
+      let category = this.registry[i].metadata.category;
+      if (category != 'custom') {
+        continue
+      }
+      let componentCategoryList = componentCategoryMap.get(custom_category_name)
+      if (!componentCategoryList) {
+        componentCategoryMap.set(custom_category_name, [])
+      }
+      componentCategoryMap.get(custom_category_name)?.push(this.registry[i])
+    }
+
+    return componentCategoryMap
+  }
+
+  /**
    * 获取组件列表
    */
   getComponentList(): ComponentConfig[] {
