@@ -3,7 +3,7 @@
 		<!-- 预览模式 -->
 		<Preview v-if="isPreviewMode" />
 		<!-- 编辑模式 -->
-		<ScadaCanvas v-else @preview="handlePreview" />
+		<ScadaCanvas ref="canvasRef" v-else @preview="handlePreview" />
 	</div>
 </template>
 
@@ -11,6 +11,7 @@
 import { ref, onMounted } from 'vue'
 import ScadaCanvas from './components/ScadaCanvas.vue'
 import Preview from './views/Preview.vue'
+const canvasRef = ref()
 
 // 检查是否为预览模式
 const isPreviewMode = ref(false)

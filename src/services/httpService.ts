@@ -91,8 +91,8 @@ export class HttpService {
 
       // 添加请求体（POST/PUT）
       if (this.config.body && (this.config.method === 'POST' || this.config.method === 'PUT')) {
-        options.body = typeof this.config.body === 'string' 
-          ? this.config.body 
+        options.body = typeof this.config.body === 'string'
+          ? this.config.body
           : JSON.stringify(this.config.body)
       }
 
@@ -173,7 +173,7 @@ export class HttpService {
    */
   stop(): void {
     console.log('[HTTP] 停止轮询')
-    
+
     this.isPolling = false
 
     if (this.intervalId) {
@@ -199,6 +199,19 @@ export class HttpService {
    */
   getConfig(): HttpConfig | null {
     return this.config
+  }
+  /**
+   * 更新请求头
+   */
+  updateHeaders(headers: Record<string, string>): void {
+    if (!this.config) return
+
+    this.config.headers = {
+      ...this.config.headers,
+      ...headers
+    }
+
+    console.log('[HTTP] 更新请求头:', headers)
   }
 }
 

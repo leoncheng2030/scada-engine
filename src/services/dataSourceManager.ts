@@ -61,13 +61,15 @@ export class DataSourceManager {
   private dataSources = reactive<Map<string, DataSource>>(new Map())
   private connections = new Map<string, any>() // 存储实际的连接实例
   private onDataCallbacks: Array<(dataSourceId: string, deviceData: any) => void> = []
+  private globalHttpHeaders: Record<string, string> = {}
+
 
   /**
    * 添加数据源
    */
   addDataSource(dataSource: DataSource): void {
     this.dataSources.set(dataSource.id, dataSource)
-    
+
     // 如果启用，立即连接
     if (dataSource.enabled) {
       this.connectDataSource(dataSource.id)
@@ -117,7 +119,7 @@ export class DataSourceManager {
    */
   getAllDevices(): Array<{ dataSourceId: string; dataSourceName: string; device: any }> {
     const devices: Array<{ dataSourceId: string; dataSourceName: string; device: any }> = []
-    
+
     this.dataSources.forEach((dataSource) => {
       dataSource.devices.forEach((device) => {
         devices.push({
@@ -127,7 +129,7 @@ export class DataSourceManager {
         })
       })
     })
-    
+
     return devices
   }
 
@@ -333,7 +335,10 @@ export class DataSourceManager {
       url: dataSource.config.url || '',
       method: dataSource.config.method as any || 'GET',
       pollInterval: dataSource.config.pollInterval || 5000,
-      headers: dataSource.config.headers,
+      headers: {
+        ...this.globalHttpHeaders,
+        ...dataSource.config.headers
+      },
       dataPath: dataSource.config.dataPath,
       enabled: true
     }
@@ -418,14 +423,14 @@ export class DataSourceManager {
       // 优先判断：多设备格式 { devices: [...] }
       if (parsedData && Array.isArray(parsedData.devices)) {
         const parsedDevices: any[] = []
-        
+
         for (const device of parsedData.devices) {
           const deviceData = DataParser.parseDeviceData(
             device,
             device.id || device.deviceId || `device-${parsedDevices.length}`,
             device.name || device.deviceName
           )
-          
+
           if (deviceData) {
             parsedDevices.push({
               id: deviceData.id,
@@ -444,7 +449,7 @@ export class DataSourceManager {
             })
           }
         }
-        
+
         if (parsedDevices.length > 0) {
           dataSource.devices = parsedDevices
           return
@@ -454,14 +459,14 @@ export class DataSourceManager {
       // 设备数组格式: [{ id, name, points }, ...]
       if (Array.isArray(parsedData) && parsedData.length > 0) {
         const parsedDevices: any[] = []
-        
+
         for (const device of parsedData) {
           const deviceData = DataParser.parseDeviceData(
             device,
             device.id || device.deviceId || `device-${parsedDevices.length}`,
             device.name || device.deviceName
           )
-          
+
           if (deviceData) {
             parsedDevices.push({
               id: deviceData.id,
@@ -480,13 +485,13 @@ export class DataSourceManager {
             })
           }
         }
-        
+
         if (parsedDevices.length > 0) {
           dataSource.devices = parsedDevices
           return
         }
       }
-      
+
       // 最后尝试：单设备数据（使用 DataParser）
       const deviceData = DataParser.parseDeviceData(
         parsedData,
@@ -511,10 +516,10 @@ export class DataSourceManager {
             timestamp: point.timestamp
           }))
         }]
-        
+
         return
       }
-      
+
       console.warn(`[DataSourceManager] 数据源 "${dataSource.name}" 接收到不支持的数据格式:`, parsedData)
       console.warn('[DataSourceManager] 支持的格式:')
       console.warn('  1. 简化点位数组: [{ id, value }, ...]')
@@ -547,6 +552,28 @@ export class DataSourceManager {
   getDataSourceStatus(id: string): { connected: boolean } | null {
     const dataSource = this.dataSources.get(id)
     return dataSource?.status || null
+  }
+
+  /**
+   * 设置全局 HTTP 头
+   * @param headers HTTP 头对象
+   */
+  setGlobalHttpHeaders(headers: Record<string, string>): void {
+    this.globalHttpHeaders = {
+      ...this.globalHttpHeaders,
+      ...headers
+    }
+
+    // 更新所有活跃的 HTTP 连接
+    this.connections.forEach((connection, id) => {
+      const dataSource = this.dataSources.get(id)
+      if (dataSource && dataSource.type === 'HTTP') {
+        // connection 是 HttpService 实例
+        if (typeof connection.updateHeaders === 'function') {
+          connection.updateHeaders(headers)
+        }
+      }
+    })
   }
 }
 
