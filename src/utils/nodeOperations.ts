@@ -79,7 +79,7 @@ export class NodeOperations {
       }
     }
 
-    if (config.shape == "image") {
+    if (config.metadata.iconType == "img") {
       nodeConfig.imageUrl = config.metadata.icon;
     }
 

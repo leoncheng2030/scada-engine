@@ -112,6 +112,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { Graph } from '@antv/x6'
 import { Selection } from '@antv/x6-plugin-selection'
 import { Snapline } from '@antv/x6-plugin-snapline'
+import { Transform } from '@antv/x6-plugin-transform'
 import { register } from '@antv/x6-vue-shape'
 import Header from './Header.vue'
 import ComponentLibrary from './ComponentLibrary.vue'
@@ -528,6 +529,23 @@ onMounted(async () => {
 				enabled: true,
 				sharp: true,
 				clean: true
+			})
+		)
+	}
+
+	// 使用插件：变换（缩放、旋转）
+	if (!props.previewMode) {
+		graph.use(
+			new Transform({
+				resizing: {
+					enabled: true,
+					minWidth: 20,
+					minHeight: 20,
+				},
+				rotating: {
+					enabled: true,
+					grid: 15,
+				},
 			})
 		)
 	}
@@ -1092,8 +1110,15 @@ const handleExport = () => {
 	}
 }
 
+// 注入 HTTP 头
+const injectHttpHeader = (headers: Record<string, string>) => {
+  dataSourceManager.setGlobalHttpHeaders(headers)
+}
+
 // 暴露核心方法给外部使用
 defineExpose({
+  /** 注入 HTTP 头 */
+  injectHttpHeader,
 	// === 文件操作 ===
 	/** 保存画布数据到 localStorage */
 	save: handleSave,

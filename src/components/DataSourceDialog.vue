@@ -166,7 +166,7 @@
 								</div>
 							</div>
 
-							<!-- HTTP 配置 -->
+						<!-- HTTP 配置 -->
 							<div v-if="formData.type === 'HTTP'" class="form-section">
 								<h5>HTTP 配置</h5>
 
@@ -195,6 +195,50 @@
 										min="1000"
 										step="1000"
 									/>
+								</div>
+
+								<div class="form-item">
+									<div class="header-label-row">
+										<label>请求头 (Headers)</label>
+										<button class="btn-icon-add" @click="addHeader" title="添加请求头">
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+												<line x1="12" y1="5" x2="12" y2="19"></line>
+												<line x1="5" y1="12" x2="19" y2="12"></line>
+											</svg>
+											添加
+										</button>
+									</div>
+									
+									<div class="headers-list">
+										<div v-if="httpHeaders.length === 0" class="empty-headers">
+											暂无自定义请求头
+										</div>
+										<div 
+											v-for="(header, index) in httpHeaders" 
+											:key="index"
+											class="header-item"
+										>
+											<input 
+												v-model="header.key" 
+												type="text" 
+												placeholder="Key"
+												class="header-input key-input"
+											/>
+											<div class="separator">:</div>
+											<input 
+												v-model="header.value" 
+												type="text" 
+												placeholder="Value"
+												class="header-input value-input"
+											/>
+											<button class="btn-icon-remove" @click="removeHeader(index)" title="删除">
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+													<polyline points="3 6 5 6 21 6"></polyline>
+													<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+												</svg>
+											</button>
+										</div>
+									</div>
 								</div>
 							</div>
 
@@ -302,9 +346,13 @@ const formData = ref<any>({
 		method: 'GET',
 		pollInterval: 5000,
 		sseUrl: '',
-		eventType: ''
+		eventType: '',
+		headers: {}
 	}
 })
+
+// HTTP Headers 临时状态
+const httpHeaders = ref<{ key: string; value: string }[]>([])
 
 const selectDataSource = (ds: DataSource) => {
 	selectedDataSource.value = ds
@@ -316,6 +364,14 @@ const selectDataSource = (ds: DataSource) => {
 		type: ds.type,
 		enabled: ds.enabled,
 		config: { ...ds.config }
+	}
+
+	// 填充 headers
+	httpHeaders.value = []
+	if (ds.config.headers) {
+		Object.entries(ds.config.headers).forEach(([key, value]) => {
+			httpHeaders.value.push({ key, value: String(value) })
+		})
 	}
 }
 
@@ -333,9 +389,11 @@ const handleAddNew = () => {
 			topic: '/devices/+/data',
 			clientId: 'scada_' + Date.now(),
 			username: '',
-			password: ''
+			password: '',
+			headers: {}
 		}
 	}
+	httpHeaders.value = []
 }
 
 const handleSave = () => {
@@ -343,6 +401,15 @@ const handleSave = () => {
 		alert('请输入数据源名称')
 		return
 	}
+
+	// 处理 headers
+	const headers: Record<string, string> = {}
+	httpHeaders.value.forEach(h => {
+		if (h.key) {
+			headers[h.key] = h.value
+		}
+	})
+	formData.value.config.headers = headers
 
 	if (isAddingNew.value) {
 		// 新建数据源
@@ -363,6 +430,14 @@ const handleSave = () => {
 			config: formData.value.config
 		})
 	}
+}
+
+const addHeader = () => {
+	httpHeaders.value.push({ key: '', value: '' })
+}
+
+const removeHeader = (index: number) => {
+	httpHeaders.value.splice(index, 1)
 }
 
 const handleDelete = () => {
@@ -472,6 +547,111 @@ const formatTime = (isoString: string) => {
 	display: flex;
 	flex-direction: column;
 	background: #0f172a;
+}
+
+/* Headers List Styles */
+.header-label-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.header-label-row label {
+	margin-bottom: 0;
+}
+
+.btn-icon-add {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	background: transparent;
+	border: 1px solid #3b82f6;
+	color: #3b82f6;
+	font-size: 12px;
+	cursor: pointer;
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: all 0.2s;
+}
+
+.btn-icon-add:hover {
+	background: rgba(59, 130, 246, 0.1);
+}
+
+.btn-icon-add svg {
+	width: 12px;
+	height: 12px;
+}
+
+.headers-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	background: #162035;
+	padding: 8px;
+	border-radius: 4px;
+	border: 1px solid #334155;
+}
+
+.header-item {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.header-input {
+	background: #0f172a !important;
+	border: 1px solid #334155 !important;
+	font-size: 12px !important;
+	padding: 6px 8px !important;
+	height: 28px;
+}
+
+.header-input:focus {
+	border-color: #3b82f6 !important;
+}
+
+.key-input {
+	flex: 1;
+	min-width: 0;
+}
+
+.value-input {
+	flex: 1.5;
+	min-width: 0;
+}
+
+.separator {
+	color: #64748b;
+	font-weight: bold;
+}
+
+.btn-icon-remove {
+	background: transparent;
+	border: none;
+	color: #64748b;
+	cursor: pointer;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	transition: all 0.2s;
+	flex-shrink: 0;
+}
+
+.btn-icon-remove:hover {
+	background: rgba(239, 68, 68, 0.1);
+	color: #ef4444;
+}
+
+.empty-headers {
+	padding: 16px;
+	text-align: center;
+	color: #64748b;
+	font-size: 12px;
 }
 
 .panel-header {
@@ -810,12 +990,14 @@ const formatTime = (isoString: string) => {
 .point-count {
 	font-size: 12px;
 	color: #94a3b8;
+	background: #1e293b;
+	padding: 2px 6px;
+	border-radius: 4px;
 }
 
 /* 状态信息 */
 .status-info {
 	background: #0f172a;
-	border: 1px solid #334155;
 	border-radius: 4px;
 	padding: 16px;
 }
