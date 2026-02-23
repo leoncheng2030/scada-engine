@@ -4,14 +4,9 @@
  */
 
 import type { Graph, Edge } from '@antv/x6'
+import { applyEdgeAnimation as applyEdgeAnimationUtil, type EdgeAnimationConfig } from '../../../shared/utils/edgeAnimationUtils'
 
-/**
- * 边动画配置
- */
-export interface EdgeAnimationConfig {
-  enabled: boolean
-  duration?: number
-}
+export type { EdgeAnimationConfig }
 
 /**
  * 边操作工具类
@@ -27,62 +22,10 @@ export class EdgeOperations {
   }
 
   /**
-   * 应用边动画
+   * 应用边动画（委托给公共工具函数）
    */
   applyEdgeAnimation(edge: Edge, animation: EdgeAnimationConfig): void {
-    // 安全检查：确保 edge 存在且是有效对象
-    if (!edge || typeof edge.attr !== 'function') {
-      console.warn('applyEdgeAnimation: edge 对象无效', edge)
-      return
-    }
-    
-    if (!animation || !animation.enabled) {
-      // 关闭动画
-      edge.attr('line/strokeDasharray', undefined)
-      // 移除光点
-      edge.attr('circle', undefined)
-      if (typeof edge.stopTransition === 'function') {
-        edge.stopTransition('attrs/circle/atConnectionRatio')
-      }
-      return
-    }
-    
-    // 使用光点流动动画
-    const duration = animation.duration || 2000 // 默认2秒
-    
-    // 获取line层的strokeWidth，作为小球的半径
-    const lineWidth = Number(edge.attr('line/strokeWidth')) || 4
-    const circleRadius = lineWidth * 0.5 // 小球半径 = line宽度的一半
-    
-    // 设置光点样式
-    edge.attr('circle', {
-      r: circleRadius,
-      atConnectionRatio: 0,
-      fill: {
-        type: 'radialGradient',
-        stops: [
-          { offset: '0%', color: '#FFF' },
-          { offset: '100%', color: edge.attr('line/stroke') || '#10b981' }
-        ]
-      },
-      stroke: edge.attr('line/stroke') || '#10b981',
-      strokeWidth: 1
-    })
-    
-    // 开始动画
-    const startAnimation = () => {
-      edge.attr('circle/atConnectionRatio', 0, { silent: true })
-      edge.transition('attrs/circle/atConnectionRatio', 1, {
-        delay: 0,
-        duration: duration,
-        timing: 'linear',
-        complete: () => {
-          // 循环动画
-          startAnimation()
-        }
-      })
-    }
-    startAnimation()
+    applyEdgeAnimationUtil(edge, animation)
   }
 
   /**

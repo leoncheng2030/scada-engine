@@ -22,6 +22,7 @@ import { Graph } from '@antv/x6'
 import { register } from '@antv/x6-vue-shape'
 import * as ScadaComponents from '../../scada-components'
 import type { ComponentConfig } from '../../scada-components/types'
+import { applyEdgeAnimation } from '../../shared/utils/edgeAnimationUtils'
 
 const canvasContainer = ref<HTMLElement>()
 const hasData = ref(false)
@@ -282,60 +283,6 @@ const loadCanvasData = () => {
 	} catch (error) {
 		console.error('加载画布数据失败:', error)
 	}
-}
-
-// 应用边动画（与ScadaCanvas中的实现保持一致）
-const applyEdgeAnimation = (edge: any, animation: any) => {
-	if (!edge || typeof edge.attr !== 'function') {
-		console.warn('applyEdgeAnimation: edge 对象无效', edge)
-		return
-	}
-	
-	if (!animation || !animation.enabled) {
-		// 关闭动画
-		edge.attr('circle', undefined)
-		if (typeof edge.stopTransition === 'function') {
-			edge.stopTransition('attrs/circle/atConnectionRatio')
-		}
-		return
-	}
-	
-	// 使用光点流动动画
-	const duration = animation.duration || 2000
-	
-	// 获取line层的strokeWidth，作为小球的半径
-	const lineWidth = Number(edge.attr('line/strokeWidth')) || 4
-	const circleRadius = lineWidth * 0.5
-	
-	// 设置光点样式
-	edge.attr('circle', {
-		r: circleRadius,
-		atConnectionRatio: 0,
-		fill: {
-			type: 'radialGradient',
-			stops: [
-				{ offset: '0%', color: '#FFF' },
-				{ offset: '100%', color: edge.attr('line/stroke') || '#10b981' }
-			]
-		},
-		stroke: edge.attr('line/stroke') || '#10b981',
-		strokeWidth: 1
-	})
-	
-	// 开始动画
-	const startAnimation = () => {
-		edge.attr('circle/atConnectionRatio', 0, { silent: true })
-		edge.transition('attrs/circle/atConnectionRatio', 1, {
-			delay: 0,
-			duration: duration,
-			timing: 'linear',
-			complete: () => {
-				// 循环动画
-				startAnimation()
-			}
-		})
-	}
-	startAnimation()
 }
 </script>
 
