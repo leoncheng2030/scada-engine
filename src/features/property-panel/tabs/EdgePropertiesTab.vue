@@ -241,9 +241,11 @@ const updateEdgeShape = (event: Event) => {
 	const value = (event.target as HTMLSelectElement).value
 	if (!props.selectedEdge) return
 	
-	// 获取当前边的数据
+	// 获取当前边的数据和路由配置
 	const edgeData = props.selectedEdge.getData()
 	const currentAttrs = props.selectedEdge.getAttrs()
+	const currentRouter = props.selectedEdge.getRouter()
+	const currentConnector = props.selectedEdge.getConnector()
 	
 	// 根据新类型设置默认样式
 	let newAttrs = { ...currentAttrs }
@@ -283,11 +285,24 @@ const updateEdgeShape = (event: Event) => {
 		}
 	}
 	
-	// 更新边的 shape 和 attrs
+	// 更新边的 shape、attrs 和 router
 	emit('updateEdge', {
 		shape: value,
 		attrs: newAttrs,
-		data: edgeData
+		data: edgeData,
+		// 保留原有路由配置，如果没有则使用默认正交路由
+		router: currentRouter || {
+			name: 'orth',
+			args: {
+				padding: 10
+			}
+		},
+		connector: currentConnector || {
+			name: 'rounded',
+			args: {
+				radius: 8
+			}
+		}
 	})
 }
 

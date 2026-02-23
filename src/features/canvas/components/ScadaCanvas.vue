@@ -575,7 +575,20 @@ onMounted(async () => {
 			createEdge() {
 				return graph!.createEdge({
 					shape: 'animated-edge',
-					zIndex: 0
+					zIndex: 0,
+					// 默认使用正交路由
+					router: {
+						name: 'orth',
+						args: {
+							padding: 10
+						}
+					},
+					connector: {
+						name: 'rounded',
+						args: {
+							radius: 8
+						}
+					}
 				})
 			},
 			validateConnection({ targetMagnet }) {
