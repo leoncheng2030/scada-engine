@@ -13,16 +13,16 @@ import type { App } from 'vue'
 import type { Graph } from '@antv/x6'
 
 // 核心组件
-import ScadaCanvas from './components/ScadaCanvas.vue'
-import PropertyPanel from './components/PropertyPanel.vue'
-import Header from './components/Header.vue'
-import ComponentLibrary from './components/ComponentLibrary.vue'
-import CanvasConfigPanel from './components/CanvasConfigPanel.vue'
-import BindingCard from './components/BindingCard.vue'
-import EventCard from './components/EventCard.vue'
-import BasicPropertiesTab from './components/BasicPropertiesTab.vue'
-import AttributeConfigDialog from './components/AttributeConfigDialog.vue'
-import CustomCodeDialog from './components/CustomCodeDialog.vue'
+import ScadaCanvas from './features/canvas/components/ScadaCanvas.vue'
+import PropertyPanel from './features/property-panel/PropertyPanel.vue'
+import Header from './shared/components/Header.vue'
+import ComponentLibrary from './shared/components/ComponentLibrary.vue'
+import CanvasConfigPanel from './features/canvas/components/CanvasConfigPanel.vue'
+import BindingCard from './features/property-panel/cards/BindingCard.vue'
+import EventCard from './features/property-panel/cards/EventCard.vue'
+import BasicPropertiesTab from './features/property-panel/tabs/BasicPropertiesTab.vue'
+import AttributeConfigDialog from './shared/components/dialogs/AttributeConfigDialog.vue'
+import CustomCodeDialog from './shared/components/dialogs/CustomCodeDialog.vue'
 
 
 // 全局样式（库模式下也需要打包输出）
@@ -75,10 +75,10 @@ export {
 } from './utils'
 
 // 导出动画引擎
-export { animationEngine } from './utils/animationEngine'
+export { animationEngine } from './shared/animation/animationEngine'
 
 // 导出事件处理工具
-export { registerNodeEvents } from './utils/eventUtils'
+export { registerNodeEvents } from './shared/utils/eventUtils'
 
 // 导出 SVG 组件加载工具
 export { loadExampleSvgComponents } from './svg/helpers/utils'
@@ -91,15 +91,15 @@ export type {
 	DevicePoint,
 	DeviceList,
 	PointValueUpdate
-} from './types/device'
+} from './features/data-source/types/device'
 
-// 导出设备点位相关枚举
+// 导出设备点位相关柚举
 export {
 	DeviceStatus,
 	DeviceType,
 	PointDataType,
 	PointAccessMode
-} from './types/device'
+} from './features/data-source/types/device'
 
 // 类型定义
 export interface EventConfig {

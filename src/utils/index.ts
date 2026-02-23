@@ -1,61 +1,43 @@
 /**
  * 工具函数统一导出
  * 便于其他模块使用
+ * 
+ * 注意：许多工具已移动到新的模块结构
+ * - 共享工具 -> shared/utils/
+ * - 共享管理器 -> shared/managers/
+ * - 动画系统 -> shared/animation/
+ * - Canvas操作 -> features/canvas/
  */
 
-// 节点属性操作工具
-export * from './nodePropertyUtils'
+// === 从 shared 重新导出 ===
+// 共享工具
+export * from '../shared/utils/nodePropertyUtils'
+export * from '../shared/utils/eventUtils'
+export * from '../shared/utils/storageUtils'
+export * from '../shared/utils/fileUtils'
+export * from '../shared/utils/commonUtils'
+export * from '../shared/utils/messageUtils'
 
-// 事件处理工具
-export * from './eventUtils'
+// 共享管理器
+export * from '../shared/managers/eventManager'
+export * from '../shared/managers/contextMenuManager'
+export * from '../shared/managers/workerManager'
 
-// 存储工具
-export * from './storageUtils'
+// 动画系统
+export * from '../shared/animation/animationScheduler'
 
-// 文件操作工具
-export * from './fileUtils'
+// === 从 features/canvas 重新导出 ===
+export * from '../features/canvas/operations/graphOperations'
+export * from '../features/canvas/operations/nodeOperations'
+export * from '../features/canvas/operations/edgeOperations'
+export * from '../features/canvas/managers/dataHandler'
+export * from '../features/canvas/managers/configWatcher'
+export * from '../features/canvas/managers/layerManager'
 
-// 通用工具
-export * from './commonUtils'
+// === 从 features/data-source 重新导出 ===
+export * from '../features/data-source/services/dataBindingService'
 
-// 消息提示工具
-export * from './messageUtils'
-
-// X6 画布操作工具
-export * from './graphOperations'
-
-// 节点操作工具
-export * from './nodeOperations'
-
-// 边操作工具
-export * from './edgeOperations'
-
-// 画布数据处理工具
-export * from './canvasDataHandler'
-
-// 数据绑定服务
-export * from './dataBindingService'
-
-// 事件管理器
-export * from './eventManager'
-
-// 右键菜单管理器
-export * from './contextMenuManager'
-
-// 画布配置监听器
-export * from './canvasConfigWatcher'
-
-// 动画调度器
-export * from './animationScheduler'
-
-// 视口裁剪服务
+// === 保留在 utils 中的文件 ===
 export * from './viewportCulling'
-
-// Worker 管理器
-export * from './workerManager'
-
-// Canvas 分层管理器
-export * from './canvasLayerManager'
-
-// Draco 解码器单例
 export * from './dracoLoader'
+export * from './authCrypto'

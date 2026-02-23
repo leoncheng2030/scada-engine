@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ScadaCanvas from './components/ScadaCanvas.vue'
-import Preview from './views/Preview.vue'
+import ScadaCanvas from './features/canvas/components/ScadaCanvas.vue'
+import Preview from './features/preview/Preview.vue'
 const canvasRef = ref()
 
 // 检查是否为预览模式
