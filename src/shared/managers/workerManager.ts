@@ -25,16 +25,9 @@ export class WorkerManager {
     if (this.worker) return
 
     try {
-      // 使用 Vite 的 Worker 导入方式
-      this.worker = new Worker(
-        new URL('../workers/dataProcessor.worker.ts', import.meta.url),
-        { type: 'module' }
-      )
-
-      this.worker.onmessage = this.handleMessage
-      this.worker.onerror = this.handleError
-
-      console.log('[WorkerManager] Worker 已初始化')
+      // 在库模式下不初始化 Worker，由上层应用自行处理
+      // 如果需要使用 Worker，请在业务代码中手动创建
+      console.warn('[WorkerManager] Worker 未初始化，将使用主线程处理数据')
     } catch (error) {
       console.error('[WorkerManager] Worker 初始化失败:', error)
       console.warn('[WorkerManager] 将使用主线程处理数据')

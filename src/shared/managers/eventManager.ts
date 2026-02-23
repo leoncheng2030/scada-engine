@@ -8,6 +8,7 @@ import type { Ref } from 'vue'
 import { animationEngine } from '../animation'
 import { contextMenuManager } from './contextMenuManager'
 import type { MenuItem } from '../components/ContextMenu.vue'
+import { canvasDataHandler } from '../../features/canvas/managers/dataHandler'
 
 /**
  * 事件管理器配置
@@ -151,12 +152,10 @@ export class GraphEventManager {
         // 导入 canvasDataHandler 并保存数据
         // 延迟一小下保存，确保连线完全创建完成
         setTimeout(() => {
-          import('../../features/canvas/managers/dataHandler').then(({ canvasDataHandler }) => {
-            canvasDataHandler.saveToLocal()
-            if (import.meta.env.DEV) {
-              console.log('[EventManager] 连线创建完成，已自动保存')
-            }
-          })
+          canvasDataHandler.saveToLocal()
+          if (import.meta.env.DEV) {
+            console.log('[EventManager] 连线创建完成，已自动保存')
+          }
         }, 100)
       }
     })
@@ -168,9 +167,7 @@ export class GraphEventManager {
     
     // 监听节点移动结束事件，自动保存
     this.graph.on('node:moved', () => {
-      import('../../features/canvas/managers/dataHandler').then(({ canvasDataHandler }) => {
-        canvasDataHandler.saveToLocal()
-      })
+      canvasDataHandler.saveToLocal()
     })
 
     // 监听节点尺寸变化事件
@@ -266,18 +263,14 @@ export class GraphEventManager {
           graph.removeNode(nodeId)
           selectedNode.value = null
           // 自动保存
-          import('../../features/canvas/managers/dataHandler').then(({ canvasDataHandler }) => {
-            canvasDataHandler.saveToLocal()
-          })
+          canvasDataHandler.saveToLocal()
         } else if (selectedEdge.value) {
           // 删除连线
           const edgeId = selectedEdge.value.id
           graph.removeEdge(edgeId)
           selectedEdge.value = null
           // 自动保存
-          import('../../features/canvas/managers/dataHandler').then(({ canvasDataHandler }) => {
-            canvasDataHandler.saveToLocal()
-          })
+          canvasDataHandler.saveToLocal()
         }
       }
     }

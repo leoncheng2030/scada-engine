@@ -87,6 +87,14 @@ export default defineConfig(({ command }) => {
 				fileName: (format) => `scada-engine.${format}.js`,
 				formats: ['es', 'umd']
 			},
+			worker: {
+				format: 'es',
+				rollupOptions: {
+					output: {
+						banner
+					}
+				}
+			},
 			rollupOptions: {
 				// 外部化依赖，不打包进库
 				external: ['vue', 'vue-router', '@antv/x6', '@antv/x6-plugin-selection', '@antv/x6-plugin-snapline', 'echarts', 'pinia', '@vueuse/core'],

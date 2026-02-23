@@ -30,7 +30,7 @@ export * from '../shared/animation/animationScheduler'
 export * from '../features/canvas/operations/graphOperations'
 export * from '../features/canvas/operations/nodeOperations'
 export * from '../features/canvas/operations/edgeOperations'
-export * from '../features/canvas/managers/dataHandler'
+// dataHandler 由事件管理器动态导入，不在此静态导出以避免打包冲突
 export * from '../features/canvas/managers/configWatcher'
 export * from '../features/canvas/managers/layerManager'
 

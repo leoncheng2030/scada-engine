@@ -7,7 +7,7 @@
       "component": {
         "id": "tank-level",
         "name": "液位罐",
-        "category": "custom",
+        "category": "iot",
         "icon": "🛢️",
         "description": "带液位显示的储罐组件",
         "version": "1.0.0",

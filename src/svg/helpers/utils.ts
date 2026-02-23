@@ -15,7 +15,7 @@ export async function loadExampleSvgComponents(): Promise<void> {
   
   try {
     // 使用 Vite 的 import.meta.glob 加载示例文件
-    const svgFiles = import.meta.glob('../examples/*.svg', { as: 'raw', eager: true })
+    const svgFiles = import.meta.glob('../examples/*.svg', { query: '?raw', import: 'default', eager: true })
     
     let loadedCount = 0
     const failedFiles: string[] = []

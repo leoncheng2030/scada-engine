@@ -7,7 +7,7 @@
       "component": {
         "id": "valve-standard",
         "name": "标准阀门",
-        "category": "custom",
+        "category": "iot",
         "icon": "🚰",
         "description": "带开度指示的标准阀门组件",
         "version": "1.0.0",

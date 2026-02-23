@@ -23,6 +23,7 @@ import EventCard from './features/property-panel/cards/EventCard.vue'
 import BasicPropertiesTab from './features/property-panel/tabs/BasicPropertiesTab.vue'
 import AttributeConfigDialog from './shared/components/dialogs/AttributeConfigDialog.vue'
 import CustomCodeDialog from './shared/components/dialogs/CustomCodeDialog.vue'
+import Preview from './features/preview/Preview.vue'
 
 
 // 全局样式（库模式下也需要打包输出）
@@ -81,7 +82,7 @@ export { animationEngine } from './shared/animation/animationEngine'
 export { registerNodeEvents } from './shared/utils/eventUtils'
 
 // 导出 SVG 组件加载工具
-export { loadExampleSvgComponents } from './svg/helpers/utils'
+// loadExampleSvgComponents 由应用自动加载，不静态导出以避免打包冲突
 export { svgLoader } from './svg/core/loader'
 export type { SVGLoader } from './svg/core/loader'
 
@@ -248,7 +249,7 @@ const components = {
   BasicPropertiesTab,
   AttributeConfigDialog,
   CustomCodeDialog,
-  // PreviewView, // 已移除，请使用 previewMode prop
+  Preview,
 }
 
 // 导出单个组件
@@ -263,7 +264,7 @@ export {
   BasicPropertiesTab,
   AttributeConfigDialog,
   CustomCodeDialog,
-  // PreviewView, // 已移除，请使用 previewMode prop
+  Preview,
 }
 
 // 安装函数 - 支持 app.use() 方式注册

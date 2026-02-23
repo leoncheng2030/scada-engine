@@ -248,9 +248,26 @@ const loadCanvasData = () => {
 			mousewheel: false
 		})
 		
-		// 加载画布数据
+		// 清洗和验证 cells 数据
 		if (data.cells && data.cells.length > 0) {
-			graph.fromJSON({ cells: data.cells })
+			console.log('🔍 完整的 cells 数据:', data.cells)
+			
+			// 验证每个 cell是否有 shape
+			const validCells = data.cells.filter((cell: any, index: number) => {
+				if (!cell.shape) {
+					console.error(`Cell ${index} 缺少 shape 字段:`, cell)
+					return false
+				}
+				console.log(`Cell ${index}:`, cell)
+				return true
+			})
+			
+			if (validCells.length === 0) {
+				console.error('所有 cells 都缺少 shape 字段')
+				return
+			}
+			
+			graph.fromJSON({ cells: validCells })
 			hasData.value = true
 			console.log('画布数据加载成功，节点数:', graph.getNodes().length, '连线数:', graph.getEdges().length)
 			
