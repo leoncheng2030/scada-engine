@@ -43,9 +43,7 @@
         }
       ],
       "ports": [
-        { "id": "port-top", "group": "top" },
         { "id": "port-right", "group": "right" },
-        { "id": "port-bottom", "group": "bottom" },
         { "id": "port-left", "group": "left" }
       ]
     }
