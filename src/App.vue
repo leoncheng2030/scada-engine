@@ -11,7 +11,6 @@
 import { ref, onMounted } from 'vue'
 import ScadaCanvas from './features/canvas/components/ScadaCanvas.vue'
 import Preview from './features/preview/Preview.vue'
-const canvasRef = ref()
 
 // 检查是否为预览模式
 const isPreviewMode = ref(false)

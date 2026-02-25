@@ -15,28 +15,20 @@
 					</div>
 
 					<div class="datasource-list">
-						<div 
-							v-if="dataSources.length === 0" 
-							class="empty-hint"
-						>
+						<div v-if="dataSources.length === 0" class="empty-hint">
 							暂无数据源
 						</div>
 
-						<div
-							v-for="ds in dataSources"
-							:key="ds.id"
+						<div v-for="ds in dataSources" :key="ds.id"
 							:class="['datasource-item', { active: selectedDataSource?.id === ds.id }]"
-							@click="selectDataSource(ds)"
-						>
+							@click="selectDataSource(ds)">
 							<div class="datasource-header">
 								<div class="datasource-info">
 									<span class="datasource-name">{{ ds.name }}</span>
 									<span class="datasource-type">{{ ds.type }}</span>
 								</div>
-								<span 
-									:class="['status-dot', ds.status?.connected ? 'connected' : 'disconnected']"
-									:title="ds.status?.connected ? '已连接' : '未连接'"
-								></span>
+								<span :class="['status-dot', ds.status?.connected ? 'connected' : 'disconnected']"
+									:title="ds.status?.connected ? '已连接' : '未连接'"></span>
 							</div>
 							<div class="datasource-meta">
 								<span class="device-count">{{ ds.devices.length }} 个设备</span>
@@ -55,11 +47,7 @@
 						<div class="detail-header">
 							<h4>{{ isAddingNew ? '新建数据源' : '数据源详情' }}</h4>
 							<div class="detail-actions">
-								<button 
-									v-if="!isAddingNew" 
-									class="btn-secondary" 
-									@click="handleDelete"
-								>
+								<button v-if="!isAddingNew" class="btn-secondary" @click="handleDelete">
 									删除
 								</button>
 								<button class="btn-primary" @click="handleSave">
@@ -71,112 +59,83 @@
 						<div class="detail-form">
 							<!-- 基本信息 -->
 							<div class="form-section">
-								<h5>基本信息</h5>
-								
-								<div class="form-item">
-									<label>名称</label>
-									<input 
-										v-model="formData.name" 
-										type="text" 
-										placeholder="例如：主机房 MQTT"
-									/>
+								<!-- 协议类型提示（置顶） -->
+								<div class="form-hint protocol-hint">
+									<template v-if="formData.type === 'MQTT'">
+										💡 适用于：多设备数据采集、主题订阅、QoS 保证（浏览器会自动使用 WebSocket 连接）
+									</template>
+									<template v-else-if="formData.type === 'WebSocket'">
+										💡 适用于：自定义 WebSocket 服务、实时数据推送
+									</template>
+									<template v-else-if="formData.type === 'HTTP'">
+										💡 适用于：RESTful API、定时查询数据
+									</template>
+									<template v-else-if="formData.type === 'SSE'">
+										💡 适用于：服务器主动推送、事件流
+									</template>
 								</div>
 
 								<div class="form-item">
-									<label>类型</label>
+									<label>协议类型</label>
 									<select v-model="formData.type" :disabled="!isAddingNew">
-										<option value="MQTT">MQTT</option>
-										<option value="WebSocket">WebSocket</option>
-										<option value="HTTP">HTTP</option>
-										<option value="SSE">SSE</option>
+										<option value="MQTT">MQTT - 工业 IoT 设备接入（推荐）</option>
+										<option value="WebSocket">WebSocket - 自定义实时数据</option>
+										<option value="HTTP">HTTP - 定时轮询接口</option>
+										<option value="SSE">SSE - 服务器推送事件</option>
 									</select>
 								</div>
-
 								<div class="form-item">
-									<label>启用</label>
-									<label class="switch">
-										<input type="checkbox" v-model="formData.enabled" />
-										<span class="slider"></span>
-									</label>
+									<label>名称</label>
+									<input v-model="formData.name" type="text" placeholder="例如：主机房 MQTT" />
 								</div>
+								<!-- 启用开关默认隐藏，新建数据源默认启用 -->
 							</div>
 
 							<!-- MQTT 配置 -->
 							<div v-if="formData.type === 'MQTT'" class="form-section">
-								<h5>MQTT 配置</h5>
-
 								<div class="form-item">
-									<label>Broker 地址</label>
-									<input 
-										v-model="formData.config.broker" 
-										type="text" 
-										placeholder="mqtt://broker.emqx.io 或 ws://broker.emqx.io:8083/mqtt"
-									/>
-									<span class="form-hint">💡 浏览器会自动转换为 WebSocket，EMQX 公共服务器使用 8083 端口</span>
+									<label class="form-item-label">Broker 地址</label>
+									<input v-model="formData.config.broker" type="text"
+										placeholder="mqtt://broker.emqx.io 或 ws://broker.emqx.io:8083/mqtt" />
+
 								</div>
 
 								<div class="form-item">
 									<label>订阅主题</label>
-									<input 
-										v-model="formData.config.topic" 
-										type="text" 
-										placeholder="/devices/+/data"
-									/>
+									<input v-model="formData.config.topic" type="text" placeholder="/devices/+/data" />
 								</div>
 
 								<div class="form-item">
 									<label>客户端 ID</label>
-									<input 
-										v-model="formData.config.clientId" 
-										type="text" 
-										placeholder="自动生成"
-									/>
+									<input v-model="formData.config.clientId" type="text" placeholder="自动生成" />
 								</div>
 
 								<div class="form-item">
 									<label>用户名</label>
-									<input 
-										v-model="formData.config.username" 
-										type="text" 
-										placeholder="可选"
-									/>
+									<input v-model="formData.config.username" type="text" placeholder="可选" />
 								</div>
 
 								<div class="form-item">
 									<label>密码</label>
-									<input 
-										v-model="formData.config.password" 
-										type="password" 
-										placeholder="可选"
-									/>
+									<input v-model="formData.config.password" type="password" placeholder="可选" />
 								</div>
 							</div>
 
 							<!-- WebSocket 配置 -->
 							<div v-if="formData.type === 'WebSocket'" class="form-section">
-								<h5>WebSocket 配置</h5>
-
 								<div class="form-item">
 									<label>服务地址</label>
-									<input 
-										v-model="formData.config.wsUrl" 
-										type="text" 
-										placeholder="ws://localhost:8080"
-									/>
+									<input v-model="formData.config.wsUrl" type="text"
+										placeholder="ws://localhost:8080" />
 								</div>
 							</div>
 
 							<!-- HTTP 配置 -->
 							<div v-if="formData.type === 'HTTP'" class="form-section">
-								<h5>HTTP 配置</h5>
-
 								<div class="form-item">
 									<label>接口地址</label>
-									<input 
-										v-model="formData.config.url" 
-										type="text" 
-										placeholder="https://api.example.com/data"
-									/>
+									<input v-model="formData.config.url" type="text"
+										placeholder="https://api.example.com/data" />
 								</div>
 
 								<div class="form-item">
@@ -189,102 +148,77 @@
 
 								<div class="form-item">
 									<label>轮询间隔 (ms)</label>
-									<input 
-										v-model.number="formData.config.pollInterval" 
-										type="number" 
-										min="1000"
-										step="1000"
-									/>
+									<input v-model.number="formData.config.pollInterval" type="number" min="1000"
+										step="1000" />
 								</div>
-								
+
 								<div class="form-item">
-									<div class="header-label-row">
-										<label>请求头 (Headers)</label>
+									<label>请求头 (Headers)</label>
+																
+									<div class="headers-container">
+										<div class="headers-list">
+											<div v-if="httpHeaders.length === 0" class="empty-headers">
+												暂无自定义请求头
+											</div>
+											<div v-for="(header, index) in httpHeaders" :key="index" class="header-item">
+												<input v-model="header.key" type="text" placeholder="Key"
+													class="header-input key-input" @input="syncHeadersToConfig" />
+												<div class="separator">:</div>
+												<input v-model="header.value" type="text" placeholder="Value"
+													class="header-input value-input" @input="syncHeadersToConfig" />
+												<button class="btn-icon-remove" @click="removeHeader(index)" type="button"
+													title="删除">
+													<svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+														stroke="currentColor" stroke-width="2" stroke-linecap="round"
+														stroke-linejoin="round">
+														<polyline points="3 6 5 6 21 6"></polyline>
+														<path
+															d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+														</path>
+													</svg>
+												</button>
+											</div>
+										</div>
+																	
 										<button class="btn-icon-add" @click="addHeader" type="button" title="添加请求头">
-											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+												stroke="currentColor" stroke-width="2" stroke-linecap="round"
+												stroke-linejoin="round">
 												<line x1="12" y1="5" x2="12" y2="19"></line>
 												<line x1="5" y1="12" x2="19" y2="12"></line>
 											</svg>
-											添加
+											添加请求头
 										</button>
 									</div>
-													
-									<div class="headers-list">
-										<div v-if="httpHeaders.length === 0" class="empty-headers">
-											暂无自定义请求头
-										</div>
-										<div 
-											v-for="(header, index) in httpHeaders" 
-											:key="index"
-											class="header-item"
-										>
-											<input 
-												v-model="header.key" 
-												type="text" 
-												placeholder="Key"
-												class="header-input key-input"
-												@input="syncHeadersToConfig"
-											/>
-											<div class="separator">:</div>
-											<input 
-												v-model="header.value" 
-												type="text" 
-												placeholder="Value"
-												class="header-input value-input"
-												@input="syncHeadersToConfig"
-											/>
-											<button class="btn-icon-remove" @click="removeHeader(index)" type="button" title="删除">
-												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-													<polyline points="3 6 5 6 21 6"></polyline>
-													<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-												</svg>
-											</button>
-										</div>
-									</div>
 								</div>
-								
+
 								<div class="form-item">
 									<label>请求体</label>
-									<textarea 
-										v-model="formData.config.body" 
-										rows="3"
-										placeholder="POST/PUT方法的请求体"
-									/>
+									<textarea v-model="formData.config.body" rows="3" placeholder="POST/PUT方法的请求体" />
 								</div>
 							</div>
 
 							<!-- SSE 配置 -->
 							<div v-if="formData.type === 'SSE'" class="form-section">
-								<h5>SSE 配置</h5>
-
 								<div class="form-item">
 									<label>服务地址</label>
-									<input 
-										v-model="formData.config.sseUrl" 
-										type="text" 
-										placeholder="https://api.example.com/events"
-									/>
+									<input v-model="formData.config.sseUrl" type="text"
+										placeholder="https://api.example.com/events" />
 								</div>
 
 								<div class="form-item">
 									<label>事件类型</label>
-									<input 
-										v-model="formData.config.eventType" 
-										type="text" 
-										placeholder="留空表示所有事件"
-									/>
+									<input v-model="formData.config.eventType" type="text" placeholder="留空表示所有事件" />
 								</div>
 							</div>
 
 							<!-- 设备列表 -->
-							<div v-if="selectedDataSource && selectedDataSource.devices.length > 0" class="form-section">
+							<div v-if="selectedDataSource && selectedDataSource.devices.length > 0"
+								class="form-section">
 								<h5>已接收设备</h5>
 								<div class="device-list">
-									<div 
-										v-for="device in selectedDataSource.devices" 
-										:key="device.id"
-										class="device-item"
-									>
+									<div v-for="device in selectedDataSource.devices" :key="device.id"
+										class="device-item">
 										<div class="device-info">
 											<span class="device-name">{{ device.name }}</span>
 											<span class="device-id">{{ device.id }}</span>
@@ -300,13 +234,15 @@
 								<div class="status-info">
 									<div class="status-row">
 										<span>状态：</span>
-										<span :class="['status-badge', selectedDataSource.status.connected ? 'connected' : 'disconnected']">
+										<span
+											:class="['status-badge', selectedDataSource.status.connected ? 'connected' : 'disconnected']">
 											{{ selectedDataSource.status.connected ? '已连接' : '未连接' }}
 										</span>
 									</div>
 									<div v-if="selectedDataSource.status.lastUpdate" class="status-row">
 										<span>最后更新：</span>
-										<span class="status-value">{{ formatTime(selectedDataSource.status.lastUpdate) }}</span>
+										<span class="status-value">{{ formatTime(selectedDataSource.status.lastUpdate)
+											}}</span>
 									</div>
 									<div v-if="selectedDataSource.status.error" class="status-row error">
 										<span>错误：</span>
@@ -367,7 +303,7 @@ const formData = ref<any>({
 const selectDataSource = (ds: DataSource) => {
 	selectedDataSource.value = ds
 	isAddingNew.value = false
-	
+
 	// 填充表单数据
 	formData.value = {
 		name: ds.name,
@@ -375,7 +311,7 @@ const selectDataSource = (ds: DataSource) => {
 		enabled: ds.enabled,
 		config: { ...ds.config }
 	}
-	
+
 	// 初始化HTTP headers列表
 	if (ds.type === 'HTTP' && ds.config.headers) {
 		httpHeaders.value = Object.entries(ds.config.headers).map(([key, value]) => ({
@@ -390,7 +326,7 @@ const selectDataSource = (ds: DataSource) => {
 const handleAddNew = () => {
 	selectedDataSource.value = null
 	isAddingNew.value = true
-	
+
 	// 重置表单
 	formData.value = {
 		name: '',
@@ -489,8 +425,13 @@ const syncHeadersToConfig = () => {
 }
 
 @keyframes fadeIn {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
 }
 
 .dialog-container {
@@ -511,6 +452,7 @@ const syncHeadersToConfig = () => {
 		transform: translateY(20px);
 		opacity: 0;
 	}
+
 	to {
 		transform: translateY(0);
 		opacity: 1;
@@ -521,7 +463,7 @@ const syncHeadersToConfig = () => {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 20px 24px;
+	padding: 10px 20px;
 	border-bottom: 1px solid #334155;
 }
 
@@ -723,7 +665,8 @@ const syncHeadersToConfig = () => {
 	gap: 8px;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
 	padding: 8px 16px;
 	border: none;
 	border-radius: 4px;
@@ -770,11 +713,16 @@ const syncHeadersToConfig = () => {
 
 .form-item {
 	margin-bottom: 16px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
 }
 
 .form-item label {
 	display: block;
-	margin-bottom: 8px;
+	width: 100px;
 	font-size: 13px;
 	color: #cbd5e1;
 }
@@ -784,7 +732,7 @@ const syncHeadersToConfig = () => {
 .form-item input[type="number"],
 .form-item textarea,
 .form-item select {
-	width: 100%;
+	flex: 1;
 	padding: 10px 12px;
 	background: #0f172a;
 	border: 1px solid #334155;
@@ -811,35 +759,54 @@ const syncHeadersToConfig = () => {
 .form-hint {
 	display: block;
 	margin-top: 6px;
+	float: left;
 	font-size: 11px;
 	color: #64748b;
 	line-height: 1.4;
 }
 
+/* 协议类型提示 */
+.protocol-hint {
+	margin-top: 0;
+	margin-bottom: 16px;
+	padding: 12px 16px;
+	background: rgba(59, 130, 246, 0.1);
+	border-left: 3px solid #3b82f6;
+	border-radius: 4px;
+	font-size: 13px;
+	color: #94a3b8;
+	line-height: 1.6;
+	float: none;
+}
+
 /* Header键值对列表 */
-.header-label-row {
+.headers-container {
+	flex: 1;
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 12px;
+	flex-direction: column;
+	gap: 0;
 }
 
 .btn-icon-add {
 	display: flex;
+	width: 100%;
 	align-items: center;
-	gap: 4px;
-	padding: 6px 12px;
-	background: #3b82f6;
-	color: white;
-	border: none;
+	justify-content: center;
+	gap: 6px;
+	padding: 10px 16px;
+	background: transparent;
+	color: #3b82f6;
+	border: 1px dashed #3b82f6;
 	border-radius: 4px;
-	font-size: 12px;
+	font-size: 13px;
 	cursor: pointer;
 	transition: all 0.2s;
 }
 
 .btn-icon-add:hover {
-	background: #2563eb;
+	background: rgba(59, 130, 246, 0.1);
+	border-color: #2563eb;
+	color: #2563eb;
 }
 
 .headers-list {
@@ -849,6 +816,7 @@ const syncHeadersToConfig = () => {
 	max-height: 240px;
 	overflow-y: auto;
 	padding: 2px;
+	margin-bottom: 12px;
 }
 
 .empty-headers {
@@ -978,11 +946,11 @@ const syncHeadersToConfig = () => {
 	border-radius: 50%;
 }
 
-.switch input:checked + .slider {
+.switch input:checked+.slider {
 	background-color: #3b82f6;
 }
 
-.switch input:checked + .slider:before {
+.switch input:checked+.slider:before {
 	transform: translateX(24px);
 }
 
