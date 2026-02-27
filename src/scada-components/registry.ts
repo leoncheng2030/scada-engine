@@ -11,6 +11,7 @@
 import type { ComponentRegistry, ComponentConfig, ComponentCategory } from './types'
 import * as IoTComponents from './chart'
 import { register } from '@antv/x6-vue-shape'
+import { reactive } from 'vue'
 
 // 组件懒加载配置
 type ComponentLoader = () => Promise<{ default: ComponentConfig }>
@@ -26,7 +27,7 @@ interface LazyComponentEntry {
  * 组件注册表
  */
 class ComponentRegistryManager {
-  private registry: ComponentRegistry = {}
+  private registry: ComponentRegistry = reactive({})
   private lazyRegistry = new Map<string, LazyComponentEntry>()
   private loadingPromises = new Map<string, Promise<ComponentConfig>>()
 
@@ -108,6 +109,10 @@ class ComponentRegistryManager {
         // X6 内部会抛出重复注册的警告
       }
     }
+  }
+
+  getRegistry(): ComponentRegistry {
+    return this.registry;
   }
   
   /**
@@ -374,7 +379,32 @@ class ComponentRegistryManager {
    * 清空注册表
    */
   clear(): void {
-    this.registry = {}
+    this.registry = reactive({})
+  }
+
+  /**
+   * 按分类获取组件
+   */
+  getComponentsByCustomCategory(): Map<string | undefined, ComponentConfig[]> {
+    let componentCategoryMap: Map<string, ComponentConfig[]> = new Map();
+
+    for (let i in this.registry) {
+      let custom_category_name = this.registry[i].metadata.custom_category_name;
+      if (custom_category_name == undefined) {
+        continue
+      }
+      let category = this.registry[i].metadata.category;
+      if (category != 'custom') {
+        continue
+      }
+      let componentCategoryList = componentCategoryMap.get(custom_category_name)
+      if (!componentCategoryList) {
+        componentCategoryMap.set(custom_category_name, [])
+      }
+      componentCategoryMap.get(custom_category_name)?.push(this.registry[i])
+    }
+
+    return componentCategoryMap
   }
 }
 

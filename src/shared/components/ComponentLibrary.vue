@@ -78,13 +78,36 @@
 						</div>
 					</div>
 				</div>
+
+				<!-- 自定义组件 -->
+				<div class="component-section" v-for="[name, customComponentList] in Array.from(customComponents.entries())" :key="name">
+					<div class="section-header" @click="toggleSection('custom')">
+						<h4 class="section-title">{{ name }}</h4>
+						<span class="toggle-icon" :class="{ collapsed: collapsedSections.custom }">▼</span>
+					</div>
+					<div class="component-grid" v-show="!collapsedSections.custom">
+						<div
+							v-for="component in customComponentList"
+							:key="component.metadata.id"
+							class="component-item"
+							@click="handleAddComponent(component)"
+							:title="component.metadata.description || component.metadata.name"
+						>
+							<span v-if="!component.metadata.iconType || component.metadata.iconType === 'icon'" class="component-icon">{{ component.metadata.icon }}</span>
+							<span v-else-if="component.metadata.iconType === 'img'" class="component-icon-img">
+								<img class="component-img" :src="component.metadata.icon" />
+							</span>
+							<span class="component-name">{{ component.metadata.name }}</span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</slot>
 	</aside>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, onMounted, onBeforeUnmount, ref } from 'vue'
+import {computed, reactive, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import { componentRegistry } from '../../scada-components'
 import type { ComponentConfig } from '../../scada-components'
 
@@ -109,11 +132,26 @@ const toggleCollapse = () => {
 const collapsedSections = reactive({
 	basic: false,
 	chart: false,
-	iot: false
+	iot: false,
+	custom: false
 })
 
+const customComponents = computed(() => {
+	refreshKey.value // 依赖刷新标记
+	return componentRegistry.getComponentsByCustomCategory()
+})
+
+// 监听画布配置变化（使用 canvasConfigWatcher）
+watch(
+	() => componentRegistry.getRegistry(),
+	() => {
+		refreshKey.value++
+	},
+	{ deep: true }
+)
+
 // 切换分组折叠状态
-const toggleSection = (section: 'basic' | 'chart' | 'iot') => {
+const toggleSection = (section: 'basic' | 'chart' | 'iot' | 'custom') => {
 	collapsedSections[section] = !collapsedSections[section]
 }
 
@@ -367,5 +405,18 @@ onBeforeUnmount(() => {
 
 .library-content::-webkit-scrollbar-corner {
 	background: #0f172a;
+}
+
+.component-icon-img {
+	display: block;
+	width: 100%;
+	height: 32px;
+	margin-bottom: 8px;
+}
+
+.component-img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
 }
 </style>

@@ -2,7 +2,7 @@
  * SCADA 组件系统类型定义
  */
 
-import type { ComponentDataAdapter } from '../types/dataAdapter'
+import type { ComponentDataAdapter } from '@/features/data-source/types/dataAdapter'
 
 /**
  * 属性配置类型
@@ -42,6 +42,8 @@ export interface ComponentMetadata {
   description?: string           // 组件描述
   version?: string               // 组件版本
   author?: string                // 组件作者
+  custom_category_name?: string | ""   // 自定义组件分类名称
+  iconType?: string  // 组件图标类型
 }
 
 /**
@@ -104,6 +106,7 @@ export interface ComponentConfig {
   component?: any                // Vue 组件实例（可选，用于 Vue Shape 注册）
   dataAdapter?: ComponentDataAdapter  // 数据适配器（可选，用于数据绑定）
   points?: ComponentPoint[]      // 组件点位定义（组件需要的数据点）
+  iconType?: string  // 组件图标类型
 }
 
 /**

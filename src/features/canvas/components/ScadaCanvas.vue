@@ -121,8 +121,8 @@ import Footer from '../../../shared/components/Footer.vue'
 import WorkflowDialog from '../../workflow/WorkflowDialog.vue'
 import DataSourceDialog from '../../data-source/components/DataSourceDialog.vue'
 import ContextMenu from '../../../shared/components/ContextMenu.vue'
-import type { MenuItem } from '../../../shared/components/ContextMenu.vue'
-import { componentRegistry, canvasConfigManager } from '../../../scada-components'
+import type { MenuItem } from '@/shared/components/ContextMenu.vue'
+import {componentRegistry, canvasConfigManager, ComponentConfig} from '@/scada-components'
 import {
 	saveToLocal,
 	loadFromLocal,
@@ -131,16 +131,17 @@ import {
 	showMessage,
 	formatTimestamp,
 	getCurrentTimestamp
-} from '../../../shared/utils'
-import { graphOperations } from '../operations/graphOperations'
-import { nodeOperations } from '../operations/nodeOperations'
-import { edgeOperations } from '../operations/edgeOperations'
-import { canvasDataHandler } from '../managers/dataHandler'
-import { dataBindingService } from '../../data-source/services/dataBindingService'
-import { graphEventManager } from '../../../shared/managers/eventManager'
-import { canvasConfigWatcher } from '../managers/configWatcher'
-import { animationEngine } from '../../../shared/animation/animationEngine'
-import { dataSourceManager, type DataSource } from '../../data-source/services/dataSourceManager'
+} from '@/shared/utils'
+import { graphOperations } from '@/features/canvas'
+import { nodeOperations } from '@/features/canvas'
+import { edgeOperations } from '@/features/canvas'
+import { canvasDataHandler } from '@/features/canvas'
+import { dataBindingService } from '@/features/data-source'
+import { graphEventManager } from '@/shared/managers'
+import { canvasConfigWatcher } from '@/features/canvas'
+import { animationEngine } from '@/shared/animation'
+import { dataSourceManager, type DataSource } from '@/features/data-source'
+import {COMMON_ANIMATION_PROPS} from "@/scada-components/types.ts";
 
 // 明确组件选项
 defineOptions({
@@ -323,6 +324,8 @@ const updateContainerTransform = () => {
 	}
 }
 
+
+
 onMounted(async () => {
 	if (!canvasAreaRef.value?.containerRef) return
 
@@ -503,7 +506,7 @@ onMounted(async () => {
 	const canvasHeight = canvasConfig.size.height
 	
 	// 计算初始缩放比例（稍后应用）
-	const initialScale = calculateFitScale()
+	// const initialScale = calculateFitScale()
 	// 不立即应用缩放，等待 graph 创建后
 	// updateContainerTransform(initialScale)
 	
@@ -1253,6 +1256,12 @@ defineExpose({
 		if (!graph) return
 		graph.unselect(graph.getSelectedCells())
 		selectedNode.value = null
+	},
+
+	// 注册组件
+	registryComponent: (config: ComponentConfig) => {
+		config.props.push(...COMMON_ANIMATION_PROPS)
+		componentRegistry.register(config)
 	},
 	
 	// === 数据访问 ===
