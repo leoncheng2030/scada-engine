@@ -645,6 +645,8 @@ onMounted(async () => {
 	canvasDataHandler.setGraph(graph)
 	// 初始化数据绑定监听（setGraph 会自动调用 initDataBinding）
 	dataBindingService.setGraph(graph)
+	// 设置 graph 到数据源管理器（用于自动收集画布节点设备ID）
+	dataSourceManager.setGraph(graph)
 
 	// ========== 初始化配置监听器 ==========
 	canvasConfigWatcher.initialize(graph, canvasAreaRef, calculateFitScale, () => {

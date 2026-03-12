@@ -146,11 +146,17 @@ const currentDataSource = computed(() => {
 const componentPoints = computed<ComponentPoint[]>(() => {
 	if (!props.selectedNode) return []
 	
-	// 直接使用 shape 查找组件配置
+	// 优先通过 componentType（组件ID）查找，因为多个组件可能共享同一个 shape（如 'image'）
+	const nodeData = props.selectedNode.getData()
+	const componentType = nodeData?.componentType
+	if (componentType) {
+		const componentConfig = componentRegistry.getComponentSync(componentType)
+		if (componentConfig?.points) return componentConfig.points
+	}
+	
+	// 兜底：通过 shape 查找
 	const shape = props.selectedNode.shape
 	if (!shape) return []
-	
-	// 从组件注册表获取组件配置
 	const componentConfig = componentRegistry.getComponentByShape(shape)
 	if (!componentConfig || !componentConfig.points) return []
 	

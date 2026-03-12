@@ -30,6 +30,9 @@ export interface DataSource {
     method?: string
     pollInterval?: number
     headers?: Record<string, string>
+    body?: any
+    /** 是否自动收集画布节点的设备ID作为请求体 */
+    autoCollectDeviceIds?: boolean
     // SSE
     sseUrl?: string
     eventType?: string
@@ -61,6 +64,64 @@ export class DataSourceManager {
   private dataSources = reactive<Map<string, DataSource>>(new Map())
   private connections = new Map<string, any>() // 存储实际的连接实例
   private onDataCallbacks: Array<(dataSourceId: string, deviceData: any) => void> = []
+  private graph: any = null
+
+  /**
+   * 设置 Graph 实例（用于扫描画布节点收集设备ID）
+   */
+  setGraph(graph: any): void {
+    this.graph = graph
+  }
+
+  /**
+   * 扫描画布上所有节点，收集绑定了数据源的设备ID列表
+   */
+  collectDeviceIdsFromCanvas(dataSourceId?: string): string[] {
+    if (!this.graph) return []
+    
+    const deviceIds: Set<string> = new Set()
+    const nodes = this.graph.getNodes()
+    
+    nodes.forEach((node: any) => {
+      const nodeData = node.getData()
+      if (!nodeData) return
+      
+      // 如果指定了 dataSourceId，只收集绑定到该数据源的节点
+      if (dataSourceId && nodeData.dataBinding?.dataSourceId !== dataSourceId) {
+        return
+      }
+      
+      // 方式1：从 dataBinding 配置中获取
+      if (nodeData.dataBinding?.deviceId) {
+        deviceIds.add(nodeData.dataBinding.deviceId)
+      }
+      
+      // 方式2：从 bindings 列表中提取设备ID（devicePointId 格式为 "deviceId:pointId"）
+      if (nodeData.bindings && Array.isArray(nodeData.bindings)) {
+        nodeData.bindings.forEach((binding: any) => {
+          if (binding.devicePointId) {
+            const parts = binding.devicePointId.split(':')
+            if (parts.length >= 1 && parts[0]) {
+              deviceIds.add(parts[0])
+            }
+          }
+        })
+      }
+      
+      // 方式3：直接从节点 data 中获取 deviceId
+      if (nodeData.deviceId) {
+        deviceIds.add(nodeData.deviceId)
+      }
+      
+      // 方式4：使用组件类型作为设备ID（兜底，确保画布上的组件都能被收集）
+      if (nodeData.componentType && deviceIds.size === 0 || 
+          (nodeData.componentType && !nodeData.dataBinding?.deviceId && !nodeData.deviceId)) {
+        deviceIds.add(nodeData.componentType)
+      }
+    })
+    
+    return Array.from(deviceIds)
+  }
 
   /**
    * 添加数据源
@@ -336,6 +397,25 @@ export class DataSourceManager {
       headers: dataSource.config.headers,
       dataPath: dataSource.config.dataPath,
       enabled: true
+    }
+
+    // 处理请求体：如果开启了自动收集设备ID，每次轮询前动态构建 body
+    if (dataSource.config.autoCollectDeviceIds) {
+      // 设置动态 body 构建器，每次轮询时自动收集画布上的设备ID
+      config.method = 'POST'
+      config.bodyBuilder = () => {
+        const deviceIds = this.collectDeviceIdsFromCanvas(id)
+        return { deviceIds }
+      }
+    } else if (dataSource.config.body) {
+      // 使用用户手动配置的静态 body
+      try {
+        config.body = typeof dataSource.config.body === 'string' 
+          ? JSON.parse(dataSource.config.body) 
+          : dataSource.config.body
+      } catch {
+        config.body = dataSource.config.body
+      }
     }
 
     await httpService.start(config)

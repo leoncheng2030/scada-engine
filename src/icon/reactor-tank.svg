@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150">
+  <defs>
+    <linearGradient id="tank-body" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4a7a8c"/>
+      <stop offset="30%" stop-color="#6db5c9"/>
+      <stop offset="70%" stop-color="#6db5c9"/>
+      <stop offset="100%" stop-color="#4a7a8c"/>
+    </linearGradient>
+    <linearGradient id="tank-top" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8dd4e8"/>
+      <stop offset="100%" stop-color="#5ba3b5"/>
+    </linearGradient>
+    <linearGradient id="tank-liquid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0891b2" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+  <!-- 罐体 -->
+  <rect x="20" y="30" width="80" height="90" rx="6" fill="url(#tank-body)" stroke="#3d6b7a" stroke-width="2"/>
+  <!-- 罐顶（椭圆盖） -->
+  <ellipse cx="60" cy="30" rx="40" ry="10" fill="url(#tank-top)" stroke="#3d6b7a" stroke-width="2"/>
+  <!-- 液位显示 -->
+  <rect x="22" y="65" width="76" height="53" rx="4" fill="url(#tank-liquid)"/>
+  <!-- 液面波纹 -->
+  <path d="M22,65 Q40,60 60,65 Q80,70 98,65" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.7"/>
+  <!-- 罐体横纹 -->
+  <line x1="20" y1="55" x2="100" y2="55" stroke="#3d6b7a" stroke-width="1" opacity="0.4"/>
+  <line x1="20" y1="85" x2="100" y2="85" stroke="#3d6b7a" stroke-width="1" opacity="0.4"/>
+  <!-- 顶部接口 -->
+  <rect x="50" y="12" width="20" height="10" rx="2" fill="#94a3b8" stroke="#64748b" stroke-width="1.5"/>
+  <!-- 搅拌轴 -->
+  <line x1="60" y1="22" x2="60" y2="95" stroke="#64748b" stroke-width="2.5"/>
+  <!-- 搅拌叶片 -->
+  <line x1="42" y1="90" x2="78" y2="90" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+  <line x1="45" y1="75" x2="75" y2="75" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- 底座 -->
+  <rect x="15" y="120" width="90" height="8" rx="2" fill="#475569" stroke="#334155" stroke-width="1.5"/>
+  <!-- 支腿 -->
+  <rect x="25" y="128" width="8" height="18" rx="1" fill="#475569" stroke="#334155" stroke-width="1"/>
+  <rect x="87" y="128" width="8" height="18" rx="1" fill="#475569" stroke="#334155" stroke-width="1"/>
+  <!-- 进料管 -->
+  <rect x="0" y="45" width="20" height="8" rx="2" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
+  <!-- 出料管 -->
+  <rect x="100" y="105" width="20" height="8" rx="2" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
+  <!-- 液位刻度 -->
+  <line x1="102" y1="40" x2="108" y2="40" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="102" y1="65" x2="108" y2="65" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="102" y1="90" x2="108" y2="90" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="102" y1="115" x2="108" y2="115" stroke="#94a3b8" stroke-width="1"/>
+</svg>

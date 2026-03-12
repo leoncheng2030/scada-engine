@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140">
+  <defs>
+    <linearGradient id="tower-body" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <linearGradient id="tower-top" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <!-- 塔身（双曲线形状） -->
+  <path d="M25,130 Q20,90 35,60 Q45,40 40,20 L80,20 Q75,40 85,60 Q100,90 95,130 Z" 
+        fill="url(#tower-body)" stroke="#475569" stroke-width="2"/>
+  <!-- 塔顶出口 -->
+  <rect x="35" y="8" width="50" height="14" rx="3" fill="url(#tower-top)" stroke="#475569" stroke-width="1.5"/>
+  <!-- 蒸汽 -->
+  <path d="M50,8 Q48,0 52,-4 Q56,-8 54,-12" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M60,8 Q58,-2 62,-6 Q66,-10 64,-14" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <path d="M70,8 Q68,0 72,-4 Q76,-8 74,-12" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <!-- 塔身横纹装饰 -->
+  <line x1="32" y1="50" x2="88" y2="50" stroke="#475569" stroke-width="1" opacity="0.5"/>
+  <line x1="28" y1="75" x2="92" y2="75" stroke="#475569" stroke-width="1" opacity="0.5"/>
+  <line x1="26" y1="100" x2="94" y2="100" stroke="#475569" stroke-width="1" opacity="0.5"/>
+  <!-- 底座 -->
+  <rect x="20" y="128" width="80" height="10" rx="2" fill="#475569" stroke="#334155" stroke-width="1.5"/>
+  <!-- 进水管 -->
+  <rect x="0" y="70" width="25" height="8" rx="2" fill="#3b82f6" stroke="#2563eb" stroke-width="1"/>
+  <!-- 出水管 -->
+  <rect x="95" y="115" width="25" height="8" rx="2" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
+</svg>
