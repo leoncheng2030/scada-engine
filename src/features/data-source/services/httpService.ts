@@ -17,6 +17,8 @@ export interface HttpConfig {
   headers?: Record<string, string>
   /** 请求体（POST/PUT） */
   body?: any
+  /** 动态请求体构建器（每次轮询时调用，优先级高于 body） */
+  bodyBuilder?: () => any
   /** 数据路径（用于解析嵌套数据） */
   dataPath?: string
   /** 启用状态 */
@@ -36,6 +38,8 @@ export class HttpService {
   private intervalId: number | null = null
   private isPolling = false
   private abortController: AbortController | null = null
+  private consecutiveErrors = 0
+  private readonly MAX_CONSECUTIVE_ERRORS = 3
 
   /**
    * 启动轮询
@@ -92,7 +96,7 @@ export class HttpService {
         key => key.toLowerCase() === 'content-type'
       )
       
-      const hasBody = this.config.body && 
+      const hasBody = (this.config.body || this.config.bodyBuilder) && 
         (this.config.method === 'POST' || this.config.method === 'PUT')
       
       options.headers = {
@@ -102,11 +106,24 @@ export class HttpService {
         ...customHeaders
       }
 
+      console.log('[HTTP] 请求详情:', {
+        url: this.config.url,
+        method: options.method,
+        headers: options.headers
+      })
+
       // 添加请求体（POST/PUT）
-      if (this.config.body && (this.config.method === 'POST' || this.config.method === 'PUT')) {
-        options.body = typeof this.config.body === 'string' 
-          ? this.config.body 
-          : JSON.stringify(this.config.body)
+      if ((this.config.method === 'POST' || this.config.method === 'PUT')) {
+        // 优先使用动态 bodyBuilder（每次轮询时重新构建）
+        const bodyData = this.config.bodyBuilder 
+          ? this.config.bodyBuilder() 
+          : this.config.body
+        
+        if (bodyData) {
+          options.body = typeof bodyData === 'string' 
+            ? bodyData 
+            : JSON.stringify(bodyData)
+        }
       }
 
       // 发送请求
@@ -141,14 +158,22 @@ export class HttpService {
         }
       }
 
-      // 更新状态
+      // 更新状态 - 请求成功
+      this.consecutiveErrors = 0
       this.onStatusChangeCallback?.(true)
 
     } catch (error) {
-      if ((error as Error).name === 'AbortError') {
-        console.error('[HTTP] 请求超时')
-      } else {
-        console.error('[HTTP] 轮询错误:', error)
+      this.consecutiveErrors++
+      
+      // 只在前几次失败时打印错误，避免刷屏
+      if (this.consecutiveErrors <= this.MAX_CONSECUTIVE_ERRORS) {
+        if ((error as Error).name === 'AbortError') {
+          console.error('[HTTP] 请求超时')
+        } else {
+          console.error('[HTTP] 轮询错误:', error)
+        }
+      } else if (this.consecutiveErrors === this.MAX_CONSECUTIVE_ERRORS + 1) {
+        console.warn(`[HTTP] 连续失败 ${this.consecutiveErrors} 次，后续错误将不再打印`)
       }
 
       // 更新状态

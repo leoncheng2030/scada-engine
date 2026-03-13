@@ -141,13 +141,16 @@ const customComponents = computed(() => {
 	return componentRegistry.getComponentsByCustomCategory()
 })
 
-// 监听画布配置变化（使用 canvasConfigWatcher）
+// 监听注册表变化（仅在组件数量变化时刷新，避免 deep watch 的性能开销）
+let lastComponentCount = Object.keys(componentRegistry.getAllComponents()).length
 watch(
-	() => componentRegistry.getRegistry(),
-	() => {
-		refreshKey.value++
-	},
-	{ deep: true }
+	() => Object.keys(componentRegistry.getRegistry()).length,
+	(newCount) => {
+		if (newCount !== lastComponentCount) {
+			lastComponentCount = newCount
+			refreshKey.value++
+		}
+	}
 )
 
 // 切换分组折叠状态
@@ -157,9 +160,6 @@ const toggleSection = (section: 'basic' | 'chart' | 'iot' | 'custom') => {
 
 // 强制刷新标记
 const refreshKey = ref(0)
-
-// 定时器 ID
-let intervalId: ReturnType<typeof setInterval> | undefined
 
 // 从注册表获取组件
 const basicComponents = computed(() => {
@@ -190,30 +190,11 @@ onMounted(async () => {
 	} catch (error) {
 		console.error('[组件库] 预加载组件失败:', error)
 	}
-	
-	// 监听组件注册表变化，自动刷新
-	// 每隔 500ms 检查一次组件数量是否变化
-	let lastComponentCount = Object.keys(componentRegistry.getAllComponents()).length
-	const checkInterval = setInterval(() => {
-		const currentCount = Object.keys(componentRegistry.getAllComponents()).length
-		if (currentCount !== lastComponentCount) {
-			lastComponentCount = currentCount
-			refreshKey.value++
-			if (import.meta.env.DEV) {
-				console.log(`[组件库] 检测到新组件，已刷新，当前数量: ${currentCount}`)
-			}
-		}
-	}, 500)
-	
-	// 存储定时器 ID 供销毁时清理
-	intervalId = checkInterval
 })
 
 // 在 setup 顶层注册 onBeforeUnmount
 onBeforeUnmount(() => {
-	if (intervalId) {
-		clearInterval(intervalId)
-	}
+	// 清理资源
 })
 </script>
 

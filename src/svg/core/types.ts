@@ -189,6 +189,10 @@ export interface SVGComponentMetadata {
   version?: string
   /** 作者 */
   author?: string
+  /** 自定义组件分类名称（category 为 custom 时生效） */
+  custom_category_name?: string
+  /** 图标类型：icon（默认 emoji）或 img（图片 URL） */
+  iconType?: string
   /** SVG 来源信息 */
   svgSource?: {
     /** 原始文件名 */
