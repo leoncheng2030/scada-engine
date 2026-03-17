@@ -163,6 +163,14 @@ interface ScadaCanvasProps {
 	onSave?: (() => void) | (() => Promise<void>) // 自定义保存回调
 	deviceData?: any // 设备数据
 	dataSource?: any // 数据源配置
+	/** 数据源配置持久化回调，传入后将使用此函数保存数据源配置 */
+	onSaveDataSources?: (configs: Array<{ id: string; name: string; type: string; enabled: boolean; config: any }>) => void | Promise<void>
+	/** 初始数据源配置列表，用于恢复之前保存的数据源 */
+	savedDataSources?: Array<{ id: string; name: string; type: string; enabled: boolean; config: any }>
+	/** 画布数据变更回调，传入后每次画布变化都会调用此函数传出数据 */
+	onCanvasChange?: (canvasData: any) => void | Promise<void>
+	/** 初始画布数据，用于恢复之前保存的画布*/
+	savedCanvasData?: any
 }
 
 const props = withDefaults(defineProps<ScadaCanvasProps>(), {
@@ -171,7 +179,11 @@ const props = withDefaults(defineProps<ScadaCanvasProps>(), {
 	previewMode: false,
 	onSave: undefined,
 	deviceData: () => ({}),
-	dataSource: () => ({})
+	dataSource: () => ({}),
+	onSaveDataSources: undefined,
+	savedDataSources: () => ([]),
+	onCanvasChange: undefined,
+	savedCanvasData: undefined
 })
 
 // 定义 emit 事件
@@ -645,6 +657,8 @@ onMounted(async () => {
 	canvasDataHandler.setGraph(graph)
 	// 初始化数据绑定监听（setGraph 会自动调用 initDataBinding）
 	dataBindingService.setGraph(graph)
+	// 设置 graph 到数据源管理器（用于自动收集画布节点设备ID）
+	dataSourceManager.setGraph(graph)
 
 	// ========== 初始化配置监听器 ==========
 	canvasConfigWatcher.initialize(graph, canvasAreaRef, calculateFitScale, () => {
@@ -657,7 +671,8 @@ onMounted(async () => {
 
 	// 尝试恢复之前保存的画布数据（仅编辑模式）
 	if (!props.previewMode) {
-		const savedCanvasData = loadFromLocal(STORAGE_KEYS.SCADA_EDITOR_DATA)
+		// 优先从 prop 读取
+		const savedCanvasData = props.savedCanvasData || loadFromLocal(STORAGE_KEYS.SCADA_EDITOR_DATA)
 		if (savedCanvasData?.cells?.length > 0) {
 			try {
 				// 清理可能损坏的数据
@@ -697,30 +712,33 @@ onMounted(async () => {
 			}
 		}
 		
-		// 从 localStorage 恢复数据源配置（持久化存储）
+		// 恢复数据源配置
 		try {
-			const savedDataSources = localStorage.getItem('scada-data-sources')
-			if (savedDataSources) {
-				const dataSourcesConfig = JSON.parse(savedDataSources)
-				if (Array.isArray(dataSourcesConfig) && dataSourcesConfig.length > 0) {
-					// 添加数据源到管理器
-					dataSourcesConfig.forEach((dsConfig: any) => {
-						const newDataSource: DataSource = {
-							id: dsConfig.id,
-							name: dsConfig.name,
-							type: dsConfig.type,
-							enabled: dsConfig.enabled !== false, // 默认启用，除非明确设置为 false
-							config: dsConfig.config,
-							devices: [],
-							status: { connected: false } // 初始为 false，连接成功后会自动更新
-						}
-						// addDataSource 会自动触发连接（如果 enabled=true）
-						dataSourceManager.addDataSource(newDataSource)
-					})
-					
-					// 立即更新一次，显示初始状态
-					dataSources.value = dataSourceManager.getAllDataSources()
+			let dataSourcesConfig: any[] = []
+			
+			if (props.savedDataSources && props.savedDataSources.length > 0) {
+				dataSourcesConfig = props.savedDataSources
+			} else {
+				const savedDataSources = localStorage.getItem('scada-data-sources')
+				if (savedDataSources) {
+					dataSourcesConfig = JSON.parse(savedDataSources)
 				}
+			}
+			
+			if (Array.isArray(dataSourcesConfig) && dataSourcesConfig.length > 0) {
+				dataSourcesConfig.forEach((dsConfig: any) => {
+					const newDataSource: DataSource = {
+						id: dsConfig.id,
+						name: dsConfig.name,
+						type: dsConfig.type,
+						enabled: dsConfig.enabled !== false,
+						config: dsConfig.config,
+						devices: [],
+						status: { connected: false }
+					}
+					dataSourceManager.addDataSource(newDataSource)
+				})
+				dataSources.value = dataSourceManager.getAllDataSources()
 			}
 		} catch (error) {
 			console.error('[恢复数据源失败:', error)
@@ -764,7 +782,11 @@ onUnmounted(() => {
 				config: ds.config
 			}))
 		}
-		saveToLocal(STORAGE_KEYS.SCADA_EDITOR_DATA, canvasData)
+		if (props.onCanvasChange) {
+			props.onCanvasChange(canvasData)
+		} else {
+			saveToLocal(STORAGE_KEYS.SCADA_EDITOR_DATA, canvasData)
+		}
 		
 		graph.dispose()
 	}
@@ -795,8 +817,8 @@ const handleAddNode = async (type: string) => {
 		graph.cleanSelection()
 		graph.select(node)
 		
-		// 自动保存到 localStorage
-		saveToLocal(STORAGE_KEYS.SCADA_EDITOR_DATA, graph.toJSON())
+		// 自动保存画布数据
+		saveCanvasData()
 	}
 }
 
@@ -804,10 +826,8 @@ const handleAddNode = async (type: string) => {
 const handleUpdateNode = (data: any) => {
 	if (!selectedNode.value) return
 	nodeOperations.updateNode(selectedNode.value, data)
-	// 自动保存到 localStorage
-	if (graph) {
-		saveToLocal(STORAGE_KEYS.SCADA_EDITOR_DATA, graph.toJSON())
-	}
+	// 自动保存画布数据
+	saveCanvasData()
 }
 
 // 删除节点
@@ -816,8 +836,8 @@ const handleDeleteNode = () => {
 	const nodeId = selectedNode.value.id
 	nodeOperations.deleteNode(nodeId)
 	selectedNode.value = null
-	// 自动保存到 localStorage
-	saveToLocal(STORAGE_KEYS.SCADA_EDITOR_DATA, graph.toJSON())
+	// 自动保存画布数据
+	saveCanvasData()
 }
 
 // 更新连线属性
@@ -855,8 +875,8 @@ const handleContextMenuClick = (key: string) => {
 						selectedEdge.value = null
 					}
 				}
-				// 自动保存到 localStorage（永久保存）
-				canvasDataHandler.saveToLocal()
+				// 自动保存
+				saveCanvasData()
 			}
 			break
 			
@@ -867,8 +887,8 @@ const handleContextMenuClick = (key: string) => {
 				if (clonedNode && graph) {
 					graph.cleanSelection()
 					graph.select(clonedNode)
-					// 自动保存到 localStorage
-					canvasDataHandler.saveToLocal()
+					// 自动保存
+					saveCanvasData()
 				}
 			}
 			break
@@ -876,16 +896,16 @@ const handleContextMenuClick = (key: string) => {
 		case 'to-front':
 			if (targetCell) {
 				targetCell.toFront()
-				// 自动保存到 localStorage
-				canvasDataHandler.saveToLocal()
+				// 自动保存
+				saveCanvasData()
 			}
 			break
 			
 		case 'to-back':
 			if (targetCell) {
 				targetCell.toBack()
-				// 自动保存到 localStorage
-				canvasDataHandler.saveToLocal()
+				// 自动保存
+				saveCanvasData()
 			}
 			break
 			
@@ -914,8 +934,12 @@ const clearAll = () => {
 		graph.clearCells()
 		// 清除选中节点
 		selectedNode.value = null
-		// 清除 localStorage 中的缓存数据
-		canvasDataHandler.clearCache()
+		// 清除缓存数据
+		if (props.onCanvasChange) {
+			props.onCanvasChange({ cells: [] })
+		} else {
+			canvasDataHandler.clearCache()
+		}
 		showMessage('画布已清空', 'success')
 	}
 }
@@ -958,29 +982,8 @@ const handleSave = async () => {
 	}
 	
 	try {
-		// 获取画布数据
-		const canvasData = {
-			version: '1.0.0',
-			timestamp: formatTimestamp(getCurrentTimestamp()),
-			config: canvasConfigManager.getConfig(),
-			cells: graph.toJSON().cells,
-			nodes: graph.getNodes().map(node => ({
-				id: node.id,
-				type: node.shape,
-				position: node.getPosition(),
-				size: node.getSize(),
-				label: node.attr('label/text'),
-				data: node.getData()
-			})),
-			edges: graph.getEdges().map(edge => ({
-				id: edge.id,
-				source: edge.getSourceCellId(),
-				target: edge.getTargetCellId()
-			}))
-		}
-		
-		// 保存到 localStorage（用于预览和恢复）
-		localStorage.setItem('scada-canvas-data', JSON.stringify(canvasData))
+		// 保存画布数据（通过回调或 localStorage）
+		saveCanvasData()
 		
 		// 如果有自定义保存回调，优先使用
 		if (props.onSave) {
@@ -1061,29 +1064,8 @@ const handlePreview = () => {
 	}
 	
 	try {
-		// 先保存画布数据到 localStorage
-		const canvasData = {
-			version: '1.0.0',
-			timestamp: formatTimestamp(getCurrentTimestamp()),
-			config: canvasConfigManager.getConfig(),
-			cells: graph.toJSON().cells,
-			nodes: graph.getNodes().map(node => ({
-				id: node.id,
-				type: node.shape,
-				position: node.getPosition(),
-				size: node.getSize(),
-				label: node.attr('label/text'),
-				data: node.getData()
-			})),
-			edges: graph.getEdges().map(edge => ({
-				id: edge.id,
-				source: edge.getSourceCellId(),
-				target: edge.getTargetCellId()
-			}))
-		}
-		
-		// 保存到 localStorage（用于预览）
-		localStorage.setItem('scada-canvas-data', JSON.stringify(canvasData))
+		// 保存画布数据（通过回调或 localStorage）
+		saveCanvasData()
 		
 		// 触发预览事件，由父组件处理
 		// 父组件可以通过 getCanvasData() 获取画布数据
@@ -1116,8 +1098,8 @@ const handleDataSource = () => {
 	}, 1000)
 }
 
-// 保存数据源配置到 localStorage
-const saveDataSourcesToLocalStorage = () => {
+// 保存数据源配置
+const saveDataSourcesToStorage = () => {
 	try {
 		const dataSourcesConfig = dataSourceManager.getAllDataSources().map(ds => ({
 			id: ds.id,
@@ -1126,9 +1108,26 @@ const saveDataSourcesToLocalStorage = () => {
 			enabled: ds.enabled,
 			config: ds.config
 		}))
-		localStorage.setItem('scada-data-sources', JSON.stringify(dataSourcesConfig))
+		
+		if (props.onSaveDataSources) {
+			// 使用外部传入的持久化回调
+			props.onSaveDataSources(dataSourcesConfig)
+		} else {
+			localStorage.setItem('scada-data-sources', JSON.stringify(dataSourcesConfig))
+		}
 	} catch (error) {
 		console.error('保存数据源失败:', error)
+	}
+}
+
+// 保存画布数据（优先使用外部回调，兜底 localStorage）
+const saveCanvasData = () => {
+	if (!graph) return
+	const data = graph.toJSON()
+	if (props.onCanvasChange) {
+		props.onCanvasChange(data)
+	} else {
+		saveToLocal(STORAGE_KEYS.SCADA_EDITOR_DATA, data)
 	}
 }
 
@@ -1145,8 +1144,8 @@ const handleAddDataSource = (config: Omit<DataSource, 'id' | 'devices' | 'status
 	// 延迟一下刷新，等待连接建立
 	setTimeout(() => {
 		dataSources.value = dataSourceManager.getAllDataSources()
-		// 保存到 localStorage
-		saveDataSourcesToLocalStorage()
+		// 持久化保存
+		saveDataSourcesToStorage()
 	}, 1000)
 	
 	showMessage(`数据源 "${newDataSource.name}" 创建成功`, 'success')
@@ -1155,8 +1154,8 @@ const handleAddDataSource = (config: Omit<DataSource, 'id' | 'devices' | 'status
 const handleSaveDataSource = (dataSource: DataSource) => {
 	dataSourceManager.updateDataSource(dataSource.id, dataSource)
 	dataSources.value = dataSourceManager.getAllDataSources()
-	// 保存到 localStorage
-	saveDataSourcesToLocalStorage()
+	// 持久化保存
+	saveDataSourcesToStorage()
 	showMessage(`数据源 "${dataSource.name}" 更新成功`, 'success')
 }
 
@@ -1164,8 +1163,8 @@ const handleDeleteDataSource = (id: string) => {
 	const ds = dataSourceManager.getDataSource(id)
 	dataSourceManager.removeDataSource(id)
 	dataSources.value = dataSourceManager.getAllDataSources()
-	// 保存到 localStorage
-	saveDataSourcesToLocalStorage()
+	// 持久化保存
+	saveDataSourcesToStorage()
 	showMessage(`数据源 "${ds?.name}" 已删除`, 'success')
 }
 

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <metadata>
+    <scada-config><![CDATA[
+    {
+      "component": {
+        "id": "fan",
+        "name": "风机",
+        "category": "iot",
+        "icon": "🌀",
+        "description": "工业风机组件，支持旋转动画",
+        "version": "1.0.0",
+        "author": "SCADA Engine"
+      },
+      "size": {
+        "width": 120,
+        "height": 120
+      },
+      "presetBindings": [
+        {
+          "partId": "part-blades",
+          "suggestedDriverProperty": "speed",
+          "label": "转速",
+          "valueType": "number",
+          "suggestedTemplate": "opening-rotate",
+          "suggestedParams": {
+            "type": "opening-rotate",
+            "inputRange": { "min": 0, "max": 360 },
+            "outputRange": { "min": 0, "max": 360 },
+            "origin": "center"
+          }
+        },
+        {
+          "partId": "part-statusLight",
+          "suggestedDriverProperty": "running",
+          "label": "运行状态",
+          "valueType": "boolean",
+          "booleanOptions": [
+            { "value": 0, "label": "停止" },
+            { "value": 1, "label": "运行" }
+          ],
+          "suggestedTemplate": "status-color",
+          "suggestedParams": {
+            "type": "status-color",
+            "colorMap": {
+              "0": "#ef4444",
+              "1": "#22c55e",
+              "false": "#ef4444",
+              "true": "#22c55e"
+            },
+            "defaultColor": "#94a3b8",
+            "applyTo": "fill"
+          }
+        }
+      ],
+      "ports": [
+        { "id": "port-inlet", "group": "left" },
+        { "id": "port-outlet", "group": "right" },
+        { "id": "port-top", "group": "top" },
+        { "id": "port-bottom", "group": "bottom" }
+      ]
+    }
+    ]]></scada-config>
+  </metadata>
+
+  <defs>
+    <linearGradient id="fan-housing-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="fan-blade-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+  </defs>
+
+  <g id="root">
+    <!-- 外壳圆环 -->
+    <circle cx="60" cy="60" r="50" fill="none" stroke="url(#fan-housing-grad)" stroke-width="6"/>
+    <circle cx="60" cy="60" r="46" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+
+    <!-- 扇叶（可旋转） -->
+    <g id="part-blades">
+      <!-- 叶片1 -->
+      <path d="M60,60 Q45,30 60,14" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1"/>
+      <path d="M60,60 Q75,30 60,14" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1" opacity="0.8"/>
+      <!-- 叶片2 -->
+      <path d="M60,60 Q90,45 106,60" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1"/>
+      <path d="M60,60 Q90,75 106,60" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1" opacity="0.8"/>
+      <!-- 叶片3 -->
+      <path d="M60,60 Q75,90 60,106" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1"/>
+      <path d="M60,60 Q45,90 60,106" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1" opacity="0.8"/>
+      <!-- 叶片4 -->
+      <path d="M60,60 Q30,75 14,60" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1"/>
+      <path d="M60,60 Q30,45 14,60" fill="url(#fan-blade-grad)" stroke="#475569" stroke-width="1" opacity="0.8"/>
+      <!-- 中心轴 -->
+      <circle cx="60" cy="60" r="8" fill="#334155" stroke="#475569" stroke-width="2"/>
+      <circle cx="60" cy="60" r="3" fill="#94a3b8"/>
+    </g>
+
+    <!-- 运行状态指示灯 -->
+    <circle id="part-statusLight" cx="60" cy="112" r="5" fill="#94a3b8" stroke="#334155" stroke-width="1.5"/>
+  </g>
+</svg>

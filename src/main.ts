@@ -15,6 +15,5 @@ loadExampleSvgComponents().then(() => {
   app.mount('#app')
 }).catch(error => {
   console.error('[App] 加载 SVG 组件失败:', error)
-  // 即使加载失败也要挂载应用
   app.mount('#app')
 })
