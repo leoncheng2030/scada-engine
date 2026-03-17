@@ -153,6 +153,17 @@
 								</div>
 
 								<div class="form-item">
+									<label>自动采集设备ID</label>
+									<div class="switch-wrapper">
+										<label class="switch">
+											<input type="checkbox" v-model="formData.config.autoCollectDeviceIds" />
+											<span class="slider"></span>
+										</label>
+										<span class="switch-hint">开启后自动扫描画布节点，将设备ID作为POST请求体发送</span>
+									</div>
+								</div>
+
+								<div class="form-item">
 									<label>请求头 (Headers)</label>
 																
 									<div class="headers-container">
@@ -295,6 +306,7 @@ const formData = ref<any>({
 		pollInterval: 5000,
 		headers: {},
 		body: '',
+		autoCollectDeviceIds: false,
 		sseUrl: '',
 		eventType: ''
 	}
@@ -326,6 +338,7 @@ const selectDataSource = (ds: DataSource) => {
 const handleAddNew = () => {
 	selectedDataSource.value = null
 	isAddingNew.value = true
+	httpHeaders.value = []
 
 	// 重置表单
 	formData.value = {
@@ -337,7 +350,9 @@ const handleAddNew = () => {
 			topic: '/devices/+/data',
 			clientId: 'scada_' + Date.now(),
 			username: '',
-			password: ''
+			password: '',
+			headers: {},
+			autoCollectDeviceIds: false
 		}
 	}
 }
@@ -346,6 +361,11 @@ const handleSave = () => {
 	if (!formData.value.name) {
 		alert('请输入数据源名称')
 		return
+	}
+
+	// 保存前强制同步 headers 到 config
+	if (formData.value.type === 'HTTP') {
+		syncHeadersToConfig()
 	}
 
 	if (isAddingNew.value) {
@@ -952,6 +972,19 @@ const syncHeadersToConfig = () => {
 
 .switch input:checked+.slider:before {
 	transform: translateX(24px);
+}
+
+.switch-wrapper {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.switch-hint {
+	font-size: 12px;
+	color: #64748b;
+	line-height: 1.4;
 }
 
 /* 设备列表 */
